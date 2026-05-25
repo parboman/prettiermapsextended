@@ -7,7 +7,7 @@ qgisMinimumVersion=3.30
 qgisMaximumVersion=4.99
 
 author=Matthew Mckee, Fraser Spalding, Nicole Sung, Irene Hanna Anu, Ben Whitehead, Daniel Deneb Mecha Martín (original); Pär Boman (extended fork)
-email=par@partypar.se
+email=info@parception.se
 
 homepage=https://github.com/parboman/prettiermapsextended
 tracker=https://github.com/parboman/prettiermapsextended/issues

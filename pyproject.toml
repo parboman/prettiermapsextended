@@ -6,7 +6,7 @@ requires-python = ">=3.9"
 dependencies = ["setuptools"]
 authors = [
     { name = "Matthew McKee" },
-    { name = "Pär Boman", email = "par@partypar.se" },
+    { name = "Pär Boman", email = "info@parception.se" },
 ]
 
 [dependency-groups]
