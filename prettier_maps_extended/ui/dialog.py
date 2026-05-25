@@ -245,7 +245,7 @@ class MainDialog(QDialog):
         child_widget_item.setFlags(
             child_widget_item.flags()
             | Qt.ItemFlag.ItemIsUserCheckable
-            | Qt.ItemFlag.ItemIsTristate
+            | Qt.ItemFlag.ItemIsAutoTristate
         )
         child_widget_item.setCheckState(0, Qt.CheckState.Checked)
 
