@@ -1,19 +1,21 @@
-<h1 align="center">Prettier Maps 1.5.0</h1>
+<h1 align="center">Prettier Maps (Extended) 1.5.0</h1>
 
 <p align="center">
-  <img src="assets/logo.png" alt="SQLModel" width="350">
+  <img src="assets/logo.png" alt="Prettier Maps logo" width="350">
 </p>
 <p align="center">
-    <em>Style and work with maps easily in QGIS</em>
+    <em>Style and work with maps easily in QGIS — QGIS 4 / Qt 6 compatible fork</em>
 </p>
 
 ---
 
-**Documentation**: <a href="https://prettiermaps.github.io/PrettierMaps/" target="_blank">prettiermaps.github.io/PrettierMaps</a>
+This is a public, AI-maintained fork of the original University of Glasgow PrettierMaps project. See the [repository README](https://github.com/parboman/prettiermapsextended#credits) for full credits and an honest account of how this fork is produced (Claude Opus writes the code, Codex reviews it, Pär is the human in the loop).
 
-**Issues**: <a href="https://github.com/PrettierMaps/PrettierMaps/issues" target="_blank">github.com/PrettierMaps/PrettierMaps/issues</a>
+**Repository**: <a href="https://github.com/parboman/prettiermapsextended" target="_blank">github.com/parboman/prettiermapsextended</a>
 
-**Plugin**: <a href="https://plugins.qgis.org/plugins/prettier_maps/#plugin-details" target="_blank">plugins.qgis.org/plugins/prettier_maps/#plugin-details</a>
+**Issues**: <a href="https://github.com/parboman/prettiermapsextended/issues" target="_blank">github.com/parboman/prettiermapsextended/issues</a>
+
+**Original upstream**: <a href="https://github.com/PrettierMaps/PrettierMaps" target="_blank">github.com/PrettierMaps/PrettierMaps</a>
 
 ---
 
@@ -60,12 +62,7 @@ To style or save a QuickOSM query, create a QuickOSM query using the QuickOSM pl
 
 ## Maintaining
 
-This project was a 3rd year University project at the University of Glasgow.
-As we have now finished the project, this repository is no longer regularly maintained.
-
-If you are interested in maintaining the project, please get in touch.
-
-For now, [Matthew McKee](https://github.com/MatthewMckee4) is the maintainer.
+The original PrettierMaps was a 3rd year University project at the University of Glasgow and is no longer regularly maintained upstream. This extended fork picks up QGIS 4 compatibility — see the [README](https://github.com/parboman/prettiermapsextended#readme) for the working model.
 
 ## License
-This project is licensed under the terms of the [GNU General Public License v2.0](https://github.com/PrettierMaps/PrettierMaps/blob/main/LICENSE)
+GPL v2 — same as upstream. See the [LICENSE file](https://github.com/parboman/prettiermapsextended/blob/main/LICENSE).

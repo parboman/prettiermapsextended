@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Tuple
+from typing import NamedTuple, Tuple
 
 from qgis.core import (
     Qgis,
@@ -10,6 +10,20 @@ from qgis.core import (
 )
 
 from prettier_maps.core.layers import is_quick_osm_layer
+
+
+class SaveResult(NamedTuple):
+    saved: int
+    skipped: int
+    failed: int
+
+    @property
+    def ok(self) -> bool:
+        return self.skipped == 0 and self.failed == 0
+
+    @property
+    def total(self) -> int:
+        return self.saved + self.skipped + self.failed
 
 
 def is_to_be_saved(layer: QgsVectorLayer) -> bool:
@@ -53,9 +67,12 @@ def add_permanent_layer(
     permanent_layer.loadNamedStyle(str(qml))
 
 
-def save_quick_osm_layers(output_directory: str) -> None:
+def save_quick_osm_layers(output_directory: str) -> SaveResult:
     """
     Saves all layers which are outputs of QuickOSM queries.
+
+    Returns a SaveResult tallying saved / skipped / failed layers, so the
+    caller can surface accurate status instead of always reporting success.
     """
 
     instance = QgsProject.instance()
@@ -67,49 +84,63 @@ def save_quick_osm_layers(output_directory: str) -> None:
         Qgis.GeometryType.Polygon: "polygon",
     }
 
+    saved = 0
+    skipped = 0
+    failed = 0
+
     for layer in instance.mapLayers().values():
-        if is_to_be_saved(layer):
-            geom_type = layer.geometryType()
-            geom_type_str = quick_osm_geoms.get(geom_type)
-            if geom_type_str is None:
-                QgsMessageLog.logMessage(
-                    f"Skipping layer {layer.name()!r}: "
-                    f"unsupported geometry type {geom_type!r}",
-                    "PrettierMaps",
-                    Qgis.MessageLevel.Warning,
-                )
-                continue
+        if not is_to_be_saved(layer):
+            continue
 
-            new_layer_name = f"{layer.name()}_{geom_type_str}"
-            layer.setName(new_layer_name)
-
-            output_file_str, qml_file = get_file_paths(output_directory, new_layer_name)
-            layer.saveNamedStyle(str(qml_file))
-
-            # Save the temporary layer to a GeoPackage
-            options = QgsVectorFileWriter.SaveVectorOptions()
-            options.driverName = "GPKG"
-            options.fileEncoding = "UTF-8"
-            options.layerOptions = [
-                "GEOMETRY_NAME=geom",
-                f"layerName={new_layer_name}",
-            ]
-            result = QgsVectorFileWriter.writeAsVectorFormatV3(
-                layer,
-                output_file_str,
-                instance.transformContext(),
-                options,
+        geom_type = layer.geometryType()
+        geom_type_str = quick_osm_geoms.get(geom_type)
+        if geom_type_str is None:
+            QgsMessageLog.logMessage(
+                f"Skipping layer {layer.name()!r}: "
+                f"unsupported geometry type {geom_type!r}",
+                "PrettierMaps",
+                Qgis.MessageLevel.Warning,
             )
-            error_code = result[0]
-            if error_code != QgsVectorFileWriter.WriterError.NoError:
-                error_message = result[1] if len(result) > 1 else ""
-                QgsMessageLog.logMessage(
-                    f"Failed to save layer {new_layer_name!r} to "
-                    f"{output_file_str}: {error_message}",
-                    "PrettierMaps",
-                    Qgis.MessageLevel.Critical,
-                )
-                continue
+            skipped += 1
+            continue
 
-            add_permanent_layer(instance, qml_file, output_file_str, new_layer_name)
-            instance.removeMapLayer(layer.id())
+        original_name = layer.name()
+        new_layer_name = f"{original_name}_{geom_type_str}"
+
+        output_file_str, qml_file = get_file_paths(output_directory, new_layer_name)
+
+        # Save the temporary layer to a GeoPackage. Rename the source layer
+        # only after a successful write so a failed save does not leave the
+        # in-memory layer with an inflated name on retry.
+        options = QgsVectorFileWriter.SaveVectorOptions()
+        options.driverName = "GPKG"
+        options.fileEncoding = "UTF-8"
+        options.layerOptions = [
+            "GEOMETRY_NAME=geom",
+            f"layerName={new_layer_name}",
+        ]
+        result = QgsVectorFileWriter.writeAsVectorFormatV3(
+            layer,
+            output_file_str,
+            instance.transformContext(),
+            options,
+        )
+        error_code = result[0]
+        if error_code != QgsVectorFileWriter.WriterError.NoError:
+            error_message = result[1] if len(result) > 1 else ""
+            QgsMessageLog.logMessage(
+                f"Failed to save layer {original_name!r} to "
+                f"{output_file_str}: {error_message}",
+                "PrettierMaps",
+                Qgis.MessageLevel.Critical,
+            )
+            failed += 1
+            continue
+
+        layer.setName(new_layer_name)
+        layer.saveNamedStyle(str(qml_file))
+        add_permanent_layer(instance, qml_file, output_file_str, new_layer_name)
+        instance.removeMapLayer(layer.id())
+        saved += 1
+
+    return SaveResult(saved=saved, skipped=skipped, failed=failed)

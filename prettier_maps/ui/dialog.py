@@ -362,13 +362,31 @@ class MainDialog(QDialog):
             dialog.setOption(QFileDialog.Option.ShowDirsOnly, True)
             if dialog.exec():
                 folder_path = dialog.selectedFiles()[0]
-                save_quick_osm_layers(folder_path)
-                self.message_bar.pushMessage(
-                    "Success",
-                    "All OSM layers have been saved successfully.",
-                    level=Qgis.MessageLevel.Success,
-                    duration=5,
-                )
+                result = save_quick_osm_layers(folder_path)
+                if result.ok and result.saved > 0:
+                    self.message_bar.pushMessage(
+                        "Success",
+                        f"{result.saved} OSM layer(s) saved successfully.",
+                        level=Qgis.MessageLevel.Success,
+                        duration=5,
+                    )
+                elif result.saved > 0:
+                    self.message_bar.pushMessage(
+                        "Partial success",
+                        f"Saved {result.saved}, skipped {result.skipped}, "
+                        f"failed {result.failed}. See QGIS message log "
+                        f"(panel: PrettierMaps) for details.",
+                        level=Qgis.MessageLevel.Warning,
+                        duration=10,
+                    )
+                else:
+                    self.message_bar.pushMessage(
+                        "No layers saved",
+                        f"Skipped {result.skipped}, failed {result.failed}. "
+                        f"See QGIS message log (panel: PrettierMaps).",
+                        level=Qgis.MessageLevel.Critical,
+                        duration=10,
+                    )
         else:
             return
 
@@ -391,7 +409,7 @@ class MainDialog(QDialog):
         return True
 
     def open_browser(self) -> None:
-        webbrowser.open("https://prettiermaps.github.io/PrettierMaps/")
+        webbrowser.open("https://github.com/parboman/prettiermapsextended")
 
     def close_dialog(self) -> None:
         self.close()
