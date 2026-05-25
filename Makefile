@@ -40,6 +40,9 @@ test-in-docker:
 .PHONY: zip_plugin
 zip_plugin:
 	rm -f prettier_maps_extended.zip
+	# Keep the in-package LICENSE in sync with the canonical repo-root one,
+	# since plugins.qgis.org requires LICENSE inside the plugin directory.
+	cp LICENSE prettier_maps_extended/LICENSE
 	zip -r prettier_maps_extended.zip prettier_maps_extended
 
 .PHONY: docs

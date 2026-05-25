@@ -18,8 +18,21 @@ Public fork of [PrettierMaps/PrettierMaps](https://github.com/PrettierMaps/Prett
 
 - All Qt enums must be scoped (`Qt.AlignmentFlag.AlignLeft`, `Qgis.MessageLevel.Critical`, `Qt.CheckState.Checked`, etc.) — Qt 6 enforces this.
 - `QAction` lives in `qgis.PyQt.QtGui` (Qt 6 moved it from `QtWidgets`).
+- `Qt.ItemFlag.ItemIsTristate` was removed in Qt 6 — use `ItemIsAutoTristate`. Other Qt 5→6 renamed enum members are similar one-off gotchas; static review won't catch them, only launching the plugin in QGIS 4 will.
 - Use `dialog.exec()`, never `dialog.exec_()`.
 - For file writing, use `QgsVectorFileWriter.writeAsVectorFormatV3` with `SaveVectorOptions`. Always check the return tuple's error code before assuming success.
+
+## Before uploading to plugins.qgis.org
+
+The QGIS plugin registry runs **flake8** against uploads with `W503` and `E704` enabled — both of which modern PEP 8 (and therefore `ruff`) consider acceptable. So `uv run ruff check` passing is **not enough**. Run:
+
+```bash
+uv run --with flake8 flake8 --max-line-length=100 prettier_maps_extended/
+```
+
+and fix any output before building the zip. Specifically avoid `from .x import *` (use explicit `__all__`), multi-line `and`/`or`/`|` chains where the operator leads the line (refactor to short-circuit if-returns or intermediate variables), and one-line `def x(): ...` abstract methods (use a docstring body instead). Don't reach for `# noqa` — restructure instead so it survives the next `ruff format` pass.
+
+The `LICENSE` file must live inside `prettier_maps_extended/` (not just at repo root) for the registry validator to accept the upload. The Makefile keeps both copies in sync via the build.
 
 ## Useful commands
 
