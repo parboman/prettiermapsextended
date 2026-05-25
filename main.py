@@ -2,7 +2,7 @@ import sys
 
 from qgis.PyQt.QtWidgets import QApplication
 
-from prettier_maps.ui import MainDialog
+from prettier_maps_extended.ui import MainDialog
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

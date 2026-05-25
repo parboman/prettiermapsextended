@@ -17,12 +17,12 @@ from qgis.core import (
     QgsVectorTileLayer,
 )
 
-from prettier_maps.core.layers import (
+from prettier_maps_extended.core.layers import (
     filter_layers,
     get_layers_from_group,
 )
-from prettier_maps.core.save_osm_layer import save_quick_osm_layers
-from prettier_maps.core.style_osm_layer import style_single_layer
+from prettier_maps_extended.core.save_osm_layer import save_quick_osm_layers
+from prettier_maps_extended.core.style_osm_layer import style_single_layer
 
 
 def test_get_layers_from_group_with_empty_group() -> None:

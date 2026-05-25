@@ -19,7 +19,7 @@ ruff:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       changes:
         - tests/**/*
-        - prettier_maps/**/*
+        - prettier_maps_extended/**/*
         - .gitlab/**/*
 
 mypy:
@@ -36,7 +36,7 @@ mypy:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       changes:
         - tests/**/*
-        - prettier_maps/**/*
+        - prettier_maps_extended/**/*
         - .gitlab/**/*
 
 test:
@@ -49,7 +49,7 @@ test:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       changes:
         - tests/**/*
-        - prettier_maps/**/*
+        - prettier_maps_extended/**/*
         - .gitlab/**/*
 
 build_docs:

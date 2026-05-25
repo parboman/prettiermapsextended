@@ -1,7 +1,7 @@
 <h1 align="center">Prettier Maps (Extended) 1.5.0</h1>
 
 <p align="center">
-  <img src="prettier_maps/assets/logo.png" alt="Prettier Maps logo" width="350">
+  <img src="prettier_maps_extended/assets/logo.png" alt="Prettier Maps logo" width="350">
 </p>
 <p align="center">
     <em>Style and work with maps easily in QGIS — now with QGIS 4 / Qt 6 support</em>

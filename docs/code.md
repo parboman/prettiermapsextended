@@ -3,7 +3,7 @@
 The codebase is structured as follows:
 
 ```
-prettier_maps/
+prettier_maps_extended/
 ├── __init__.py
 ├── interfaces.py
 ├── metadata.txt

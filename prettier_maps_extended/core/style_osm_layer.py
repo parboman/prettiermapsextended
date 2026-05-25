@@ -8,7 +8,7 @@ from qgis.core import (
 )
 from qgis.utils import iface
 
-from prettier_maps.core.layers import get_groups, is_quick_osm_layer
+from prettier_maps_extended.core.layers import get_groups, is_quick_osm_layer
 
 
 def apply_style_to_quick_osm_layers(colour: QColor) -> None:

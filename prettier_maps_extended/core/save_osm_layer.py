@@ -9,7 +9,7 @@ from qgis.core import (
     QgsVectorLayer,
 )
 
-from prettier_maps.core.layers import is_quick_osm_layer
+from prettier_maps_extended.core.layers import is_quick_osm_layer
 
 
 class SaveResult(NamedTuple):

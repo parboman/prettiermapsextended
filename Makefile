@@ -11,7 +11,7 @@ clean:
 	rm -rf .mypy_cache
 	rm -rf .ruff_cache
 	rm -rf build/
-	rm -rf prettier_maps.egg-info/
+	rm -rf prettier_maps_extended.egg-info/
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 
 
@@ -30,7 +30,7 @@ test:
 
 .PHONY: cov
 cov:
-	pytest -s -v --cov=prettier_maps --cov=tests --cov-report=term-missing:skip-covered
+	pytest -s -v --cov=prettier_maps_extended --cov=tests --cov-report=term-missing:skip-covered
 
 .PHONY: test-in-docker
 test-in-docker:
@@ -39,8 +39,8 @@ test-in-docker:
 
 .PHONY: zip_plugin
 zip_plugin:
-	rm -f prettier_maps.zip
-	zip -r prettier_maps.zip prettier_maps
+	rm -f prettier_maps_extended.zip
+	zip -r prettier_maps_extended.zip prettier_maps_extended
 
 .PHONY: docs
 docs:

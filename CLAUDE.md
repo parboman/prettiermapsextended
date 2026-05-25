@@ -29,7 +29,7 @@ Public fork of [PrettierMaps/PrettierMaps](https://github.com/PrettierMaps/Prett
 
 ## Layout
 
-- `prettier_maps/` — the actual QGIS plugin (loaded by QGIS)
+- `prettier_maps_extended/` — the actual QGIS plugin (loaded by QGIS). The directory name **is** the plugin identifier in the QGIS plugin registry — renamed from `prettier_maps` so this fork can coexist with the upstream plugin.
 - `main.py` — standalone dev entry point (not packaged into the plugin zip)
 - `tests/core/` — pytest suite, runs against real QGIS bindings
 - `docs/` — mkdocs site source

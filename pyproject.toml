@@ -1,5 +1,5 @@
 [project]
-name = "prettier_maps"
+name = "prettier_maps_extended"
 version = "1.5.0"
 description = "Style Maps Easily in QGIS — extended fork with QGIS 4 / Qt 6 support"
 requires-python = ">=3.9"
@@ -25,12 +25,12 @@ docs = [
 ]
 
 [tool.qgis-plugin-ci]
-plugin_path = "prettier_maps"
+plugin_path = "prettier_maps_extended"
 github_organization_slug = "parboman"
 project_slug = "prettiermapsextended"
 
 [tool.setuptools]
-packages = { find = { where = ["prettier_maps"] } }
+packages = { find = { where = ["prettier_maps_extended"] } }
 
 [tool.ruff]
 exclude = [
@@ -102,7 +102,7 @@ exclude_also = [
 ignore_errors = true
 
 [tool.coverage.run]
-omit = ["prettier_maps/ui/**", "prettier_maps/plugin.py"]
+omit = ["prettier_maps_extended/ui/**", "prettier_maps_extended/plugin.py"]
 
 
 [tool.tbump]
@@ -114,10 +114,10 @@ src = "README.md"
 src = "pyproject.toml"
 
 [[tool.tbump.file]]
-src = "prettier_maps/metadata.txt"
+src = "prettier_maps_extended/metadata.txt"
 
 [[tool.tbump.file]]
-src = "prettier_maps/__init__.py"
+src = "prettier_maps_extended/__init__.py"
 
 [[tool.tbump.file]]
 src = "docs/index.md"
