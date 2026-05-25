@@ -1,10 +1,13 @@
 [project]
 name = "prettier_maps"
-version = "1.4.4"
-description = "Style Maps Easily in GQIS"
+version = "1.5.0"
+description = "Style Maps Easily in QGIS — extended fork with QGIS 4 / Qt 6 support"
 requires-python = ">=3.9"
-dependencies = ["pyqt5", "setuptools"]
-authors = [{ name = "Matthew McKee" }]
+dependencies = ["setuptools"]
+authors = [
+    { name = "Matthew McKee" },
+    { name = "Pär Boman", email = "par@partypar.se" },
+]
 
 [dependency-groups]
 dev = ["ruff>=0.9.1", "mypy>=1.14.1", "pre-commit>=4.0.1", "tbump"]
@@ -23,8 +26,8 @@ docs = [
 
 [tool.qgis-plugin-ci]
 plugin_path = "prettier_maps"
-github_organization_slug = "PrettierMaps"
-project_slug = "PrettierMaps"
+github_organization_slug = "parboman"
+project_slug = "prettiermapsextended"
 
 [tool.setuptools]
 packages = { find = { where = ["prettier_maps"] } }
@@ -124,7 +127,7 @@ message_template = "Bump to {new_version}"
 tag_template = "{new_version}"
 
 [tool.tbump.version]
-current = "1.4.4"
+current = "1.5.0"
 regex = '''
   (?P<major>\d+)
   \.

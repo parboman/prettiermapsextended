@@ -1,16 +1,17 @@
 [general]
-name=Prettier Maps
-description=Split a MapTiler layer.
-about=Prettier Maps is a plugin that helps with separating a given vector tile layer from MapTiler into their respective vector tile sublayers for easier manageability. To start, open a map from MapTiler. Then open PrettierMaps and click split layers.
-version=1.4.4
-qgisMinimumVersion=3.0
+name=Prettier Maps (Extended)
+description=Split a MapTiler layer. QGIS 4 / Qt 6 compatible fork.
+about=Prettier Maps is a plugin that helps with separating a given vector tile layer from MapTiler into their respective vector tile sublayers for easier manageability. To start, open a map from MapTiler. Then open PrettierMaps and click split layers. This extended fork updates the original University of Glasgow project for QGIS 4 / Qt 6 compatibility.
+version=1.5.0
+qgisMinimumVersion=3.30
+qgisMaximumVersion=4.99
 
-author=Matthew Mckee, Fraser Spalding, Nicole Sung, Irene Hanna Anu, Ben Whitehead, Daniel Deneb Mecha Martín
-email=2772171m@student.gla.ac.uk, 2763283s@student.gla.ac.uk, 2521002s@student.gla.ac.uk, 2772146I@student.gla.ac.uk, 2732382w@student.gla.ac.uk, 3050910m@student.gla.ac.uk
+author=Matthew Mckee, Fraser Spalding, Nicole Sung, Irene Hanna Anu, Ben Whitehead, Daniel Deneb Mecha Martín (original); Pär Boman (extended fork)
+email=par@partypar.se
 
-homepage=https://prettiermaps.github.io/PrettierMaps/
-tracker=https://github.com/PrettierMaps/PrettierMaps/issues
-repository=https://github.com/PrettierMaps/PrettierMaps
+homepage=https://github.com/parboman/prettiermapsextended
+tracker=https://github.com/parboman/prettiermapsextended/issues
+repository=https://github.com/parboman/prettiermapsextended
 
 icon=assets/logo.png
 category=Vector
