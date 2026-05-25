@@ -1,6 +1,6 @@
 from typing import Optional
 
-from qgis.PyQt.QtGui import QAction, QIcon, QPainter
+from qgis.PyQt.QtGui import QAction, QIcon
 
 from .config import LOGO_PATH
 from .interfaces import IQgisInterface
@@ -13,27 +13,25 @@ class PrettierMapsPlugin:
         self.action: Optional[QAction] = None
 
     def initGui(self) -> None:
-        """Initializes the GUI"""
-
-        # Get the icon
+        """Add the plugin's toolbar action to QGIS."""
         icon = QIcon(str(LOGO_PATH))
 
-        self.action = QAction(icon, "PrettierMaps", self.iface.mainWindow())
-        self.action.setObjectName("prettierMapsAction")
-        self.action.setWhatsThis("Configuration for PrettierMaps")
-        self.action.setStatusTip("This is status tip")
+        self.action = QAction(icon, "Prettier Maps (Extended)", self.iface.mainWindow())
+        self.action.setObjectName("prettierMapsExtendedAction")
+        self.action.setWhatsThis(
+            "Toggle individual sublayers of a MapTiler vector tile basemap, "
+            "and style or save QuickOSM query results."
+        )
+        self.action.setStatusTip("Open Prettier Maps (Extended)")
 
-        # Connect the open_dialog function to the button
         self.action.triggered.connect(self.open_dialog)
         self.iface.addWebToolBarIcon(self.action)
 
     def unload(self) -> None:
-        """Removes the icon from the toolbar"""
-
+        """Remove the plugin's toolbar action from QGIS."""
         self.iface.removeWebToolBarIcon(self.action)
 
     def open_dialog(self) -> None:
-        """Opens the main dialog"""
-
+        """Open the main plugin dialog."""
         dialog = MainDialog()
         dialog.exec()

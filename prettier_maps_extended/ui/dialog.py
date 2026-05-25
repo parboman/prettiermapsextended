@@ -2,26 +2,6 @@ import webbrowser
 from pathlib import Path
 from typing import Dict, List, Set, Tuple, Union
 
-from qgis.PyQt.QtCore import (
-    QSize,
-    Qt,
-    QTimer,
-)
-from qgis.PyQt.QtGui import QFont
-from qgis.PyQt.QtWidgets import (
-    QColorDialog,
-    QDialog,
-    QFileDialog,
-    QHBoxLayout,
-    QLabel,
-    QMessageBox,
-    QPushButton,
-    QScrollArea,
-    QStyle,
-    QTreeWidget,
-    QTreeWidgetItem,
-    QVBoxLayout,
-)
 from qgis.core import (
     Qgis,
     QgsLayerTreeGroup,
@@ -30,6 +10,21 @@ from qgis.core import (
     QgsVectorTileLayer,
 )
 from qgis.gui import QgsMessageBar
+from qgis.PyQt.QtCore import QSize, Qt
+from qgis.PyQt.QtGui import QFont
+from qgis.PyQt.QtWidgets import (
+    QColorDialog,
+    QDialog,
+    QFileDialog,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QScrollArea,
+    QStyle,
+    QTreeWidget,
+    QTreeWidgetItem,
+    QVBoxLayout,
+)
 
 from prettier_maps_extended.config import INFO_STYLE_PATH
 from prettier_maps_extended.config.layers import POSSIBLE_LAYERS
@@ -51,17 +46,12 @@ class MainDialog(QDialog):
         return QFont("Arial", 12)
 
     def init_ui(self) -> None:
-        self.setWindowTitle("Prettier Maps")
+        self.setWindowTitle("Prettier Maps (Extended)")
         self.resize(500, 600)
 
         layout = QVBoxLayout()
         layout.setContentsMargins(20, 20, 20, 20)
 
-        # Adding QGIS Message Bar
-        self.message_bar = QgsMessageBar(self)
-        layout.addWidget(self.message_bar)
-
-        # Adding QGIS Message Bar
         self.message_bar = QgsMessageBar(self)
         layout.addWidget(self.message_bar)
 
@@ -137,24 +127,6 @@ class MainDialog(QDialog):
         close_button.clicked.connect(self.close_dialog)
         layout.addWidget(close_button)
 
-    def show_message(
-        self, text: str, level: str = "success", duration: int = 5000
-    ) -> None:
-        colors = {
-            "success": "green",
-            "warning": "orange",
-            "error": "red",
-        }
-        self.message_label.setText(text)
-        self.message_label.setStyleSheet(
-            f"QLabel {{ color: white; background-color:{colors.get(level, 'blue')};"
-            f"padding: 10px; border-radius: 5px; }}"
-        )
-        self.message_label.show()
-
-        # Hide the message after the duration
-        QTimer.singleShot(duration, self.message_label.hide)
-
     def get_selected_layers(self) -> Set[str]:
         selected_layers = {
             k
@@ -174,11 +146,8 @@ class MainDialog(QDialog):
 
         filter_layers(self.get_selected_layers())
 
-    # might or might not need
     def no_maptiler_layers_found(self, title, message, level=Qgis.MessageLevel.Info):
-        """
-        Raises a relevant error to the user.
-        """
+        """Push a message about missing MapTiler layers to the message bar."""
         self.message_bar.pushMessage(title, message, level=level)
 
     def get_vector_tile_layers(self) -> Union[List[QgsVectorTileLayer], None]:
@@ -237,7 +206,7 @@ class MainDialog(QDialog):
         self, parent_widget_item: QTreeWidgetItem, name: str
     ) -> QTreeWidgetItem:
         """
-        Setup a new tree widge items, including linking to parent in tree.
+        Set up a new tree widget item and link it to its parent.
         """
 
         child_widget_item = QTreeWidgetItem(parent_widget_item)
@@ -310,7 +279,7 @@ class MainDialog(QDialog):
         checked through a pair of booleans.
 
         :param item: parent item.
-        :return: all chlidren are checked, all children are unchecked.
+        :return: (all children checked, all children unchecked).
         """
         children = [
             item.child(i)
@@ -358,52 +327,53 @@ class MainDialog(QDialog):
             self.update_parent_check_state(parent)
 
     def save_layers_dialog(self) -> None:
-        if self.check_has_QuickOSM_layers():
-            dialog = QFileDialog()
-            dialog.setFileMode(QFileDialog.FileMode.Directory)
-            dialog.setOption(QFileDialog.Option.ShowDirsOnly, True)
-            if dialog.exec():
-                folder_path = dialog.selectedFiles()[0]
-                result = save_quick_osm_layers(folder_path)
-                if result.ok and result.saved > 0:
-                    self.message_bar.pushMessage(
-                        "Success",
-                        f"{result.saved} OSM layer(s) saved successfully.",
-                        level=Qgis.MessageLevel.Success,
-                        duration=5,
-                    )
-                elif result.saved > 0:
-                    self.message_bar.pushMessage(
-                        "Partial success",
-                        f"Saved {result.saved}, skipped {result.skipped}, "
-                        f"failed {result.failed}. See QGIS message log "
-                        f"(panel: PrettierMaps) for details.",
-                        level=Qgis.MessageLevel.Warning,
-                        duration=10,
-                    )
-                else:
-                    self.message_bar.pushMessage(
-                        "No layers saved",
-                        f"Skipped {result.skipped}, failed {result.failed}. "
-                        f"See QGIS message log (panel: PrettierMaps).",
-                        level=Qgis.MessageLevel.Critical,
-                        duration=10,
-                    )
-        else:
+        if not self.check_has_QuickOSM_layers():
+            return
+        dialog = QFileDialog()
+        dialog.setFileMode(QFileDialog.FileMode.Directory)
+        dialog.setOption(QFileDialog.Option.ShowDirsOnly, True)
+        if not dialog.exec():
             return
 
-    def style_QuickOSM_layers(self) -> None:
-        if self.check_has_QuickOSM_layers():
-            colour = QColorDialog.getColor()
-            apply_style_to_quick_osm_layers(colour)
+        folder_path = dialog.selectedFiles()[0]
+        result = save_quick_osm_layers(folder_path)
+        if result.ok and result.saved > 0:
+            self.message_bar.pushMessage(
+                "Success",
+                f"{result.saved} QuickOSM layer(s) saved successfully.",
+                level=Qgis.MessageLevel.Success,
+                duration=5,
+            )
+        elif result.saved > 0:
+            self.message_bar.pushMessage(
+                "Partial success",
+                f"Saved {result.saved}, skipped {result.skipped}, "
+                f"failed {result.failed}. See QGIS message log "
+                f"(panel: PrettierMaps) for details.",
+                level=Qgis.MessageLevel.Warning,
+                duration=10,
+            )
         else:
+            self.message_bar.pushMessage(
+                "No layers saved",
+                f"Skipped {result.skipped}, failed {result.failed}. "
+                f"See QGIS message log (panel: PrettierMaps).",
+                level=Qgis.MessageLevel.Critical,
+                duration=10,
+            )
+
+    def style_QuickOSM_layers(self) -> None:
+        if not self.check_has_QuickOSM_layers():
             return
+        colour = QColorDialog.getColor()
+        apply_style_to_quick_osm_layers(colour)
 
     def check_has_QuickOSM_layers(self) -> bool:
         if not has_quick_osm_layers():
             self.message_bar.pushMessage(
                 "Warning",
-                "There are no OSM layers in the current project.",
+                "There are no QuickOSM layers in the current project. "
+                "Run a QuickOSM query first.",
                 level=Qgis.MessageLevel.Warning,
                 duration=5,
             )

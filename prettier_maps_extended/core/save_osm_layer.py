@@ -59,7 +59,7 @@ def add_permanent_layer(
 
     :param instance: Current project.
     :param qml: Path of the style file.
-    :param output_file: Path of hte output file.
+    :param output_file: Path of the output file.
     :param name: Name of the permanent layer.
     """
     permanent_layer = QgsVectorLayer(f"{output_file}|layername={name}", name, "ogr")

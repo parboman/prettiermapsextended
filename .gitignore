@@ -163,6 +163,7 @@ cython_debug/
 
 # Compiled Plugin
 prettier_maps.zip
+prettier_maps_extended.zip
 
 
 # .DS_Store files

@@ -1,4 +1,3 @@
-from qgis.PyQt.QtGui import QColor
 from qgis.core import (
     QgsFillSymbol,
     QgsLayerTreeLayer,
@@ -6,6 +5,7 @@ from qgis.core import (
     QgsMarkerSymbol,
     QgsVectorLayer,
 )
+from qgis.PyQt.QtGui import QColor
 from qgis.utils import iface
 
 from prettier_maps_extended.core.layers import get_groups, is_quick_osm_layer
@@ -25,32 +25,24 @@ def apply_style_to_quick_osm_layers(colour: QColor) -> None:
             update_styled_layer(layer)
 
 
-def style_single_layer(layer: "QgsVectorLayer", colour: QColor) -> None:
-    """
-    Makes an individual layer conform to the uniform style.
-    """
-
+def style_single_layer(layer: QgsVectorLayer, colour: QColor) -> None:
+    """Apply a uniform fill/line/marker style to a single QuickOSM layer."""
     symbol_renderer = layer.renderer()
     cur_symbol = symbol_renderer.symbol()
 
     basic_symbols = (QgsFillSymbol, QgsLineSymbol, QgsMarkerSymbol)
     symbol = None
-
     for symbol_type in basic_symbols:
         if isinstance(cur_symbol, symbol_type):
             symbol = symbol_type.createSimple({})
 
-    # If we can't overwrite with a simple, settle for just changing the colour
+    # If the current symbol is not a basic type we can recreate, just recolour it.
     if symbol is None:
         symbol = cur_symbol
 
-    if colour.isValid():
-        symbol.setColor(colour)
-        symbol_renderer.setSymbol(symbol)
-    else:
-        # defaults to purple
-        symbol.setColor(QColor.fromRgb(155, 0, 155))
-        symbol_renderer.setSymbol(symbol)
+    # Fall back to purple if the user cancelled the colour picker.
+    symbol.setColor(colour if colour.isValid() else QColor.fromRgb(155, 0, 155))
+    symbol_renderer.setSymbol(symbol)
 
 
 def update_styled_layer(layer: QgsVectorLayer) -> None:

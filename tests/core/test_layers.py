@@ -2,7 +2,6 @@ import tempfile
 from pathlib import Path
 from typing import List
 
-from qgis.PyQt.QtGui import QColor
 from qgis.core import (
     Qgis,
     QgsLayerTreeGroup,
@@ -16,6 +15,7 @@ from qgis.core import (
     QgsVectorTileBasicRendererStyle,
     QgsVectorTileLayer,
 )
+from qgis.PyQt.QtGui import QColor
 
 from prettier_maps_extended.core.layers import (
     filter_layers,
