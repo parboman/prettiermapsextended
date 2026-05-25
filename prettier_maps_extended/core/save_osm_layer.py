@@ -9,8 +9,6 @@ from qgis.core import (
     QgsVectorLayer,
 )
 
-from prettier_maps_extended.core.layers import is_quick_osm_layer
-
 
 class SaveResult(NamedTuple):
     saved: int
@@ -27,14 +25,12 @@ class SaveResult(NamedTuple):
 
 
 def is_to_be_saved(layer: QgsVectorLayer) -> bool:
-    """
-    Simple filter for selecting which layers will be saved.
-    """
-    return (
-        isinstance(layer, QgsVectorLayer)
-        and layer.isValid()
-        and layer.dataProvider().name() == "memory"
-    )
+    """Return True if the layer is an in-memory vector layer eligible for export."""
+    if not isinstance(layer, QgsVectorLayer):
+        return False
+    if not layer.isValid():
+        return False
+    return layer.dataProvider().name() == "memory"
 
 
 def get_file_paths(directory: str, name: str) -> Tuple[str, Path]:

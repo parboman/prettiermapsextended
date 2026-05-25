@@ -211,11 +211,10 @@ class MainDialog(QDialog):
 
         child_widget_item = QTreeWidgetItem(parent_widget_item)
         child_widget_item.setText(0, name)
-        child_widget_item.setFlags(
-            child_widget_item.flags()
-            | Qt.ItemFlag.ItemIsUserCheckable
-            | Qt.ItemFlag.ItemIsAutoTristate
+        checkable_tristate = (
+            Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsAutoTristate
         )
+        child_widget_item.setFlags(child_widget_item.flags() | checkable_tristate)
         child_widget_item.setCheckState(0, Qt.CheckState.Checked)
 
         return child_widget_item
