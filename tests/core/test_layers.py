@@ -2,7 +2,7 @@ import tempfile
 from pathlib import Path
 from typing import List
 
-from PyQt5.QtGui import QColor
+from qgis.PyQt.QtGui import QColor
 from qgis.core import (
     Qgis,
     QgsLayerTreeGroup,
@@ -114,9 +114,13 @@ def test_single_layer_styling() -> None:
     instance = QgsProject.instance()
     assert instance is not None
 
+    geom_type_names = {
+        Qgis.GeometryType.Point: "point",
+        Qgis.GeometryType.Line: "line",
+        Qgis.GeometryType.Polygon: "polygon",
+    }
     layers = []
-    for geom_type in [Qgis.GeometryType(i) for i in range(3)]:
-        current_geom_type = ["point", "line", "polygon"][geom_type]
+    for geom_type, current_geom_type in geom_type_names.items():
         layer = QgsVectorLayer(
             f"{current_geom_type}?crs=EPSG:4326",
             f"{current_geom_type}_layer",

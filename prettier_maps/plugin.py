@@ -1,7 +1,6 @@
 from typing import Optional
 
-from PyQt5.QtGui import QIcon, QPainter
-from PyQt5.QtWidgets import QAction
+from qgis.PyQt.QtGui import QAction, QIcon, QPainter
 
 from .config import LOGO_PATH
 from .interfaces import IQgisInterface
@@ -37,4 +36,4 @@ class PrettierMapsPlugin:
         """Opens the main dialog"""
 
         dialog = MainDialog()
-        dialog.exec_()
+        dialog.exec()

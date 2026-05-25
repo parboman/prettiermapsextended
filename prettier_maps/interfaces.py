@@ -1,8 +1,9 @@
 from abc import abstractmethod
 from typing import Optional
 
-from PyQt5.QtCore import QObject
-from PyQt5.QtWidgets import QAction, QWidget
+from qgis.PyQt.QtCore import QObject
+from qgis.PyQt.QtGui import QAction
+from qgis.PyQt.QtWidgets import QWidget
 
 
 class IQgisInterface(QObject):  # type: ignore[misc]

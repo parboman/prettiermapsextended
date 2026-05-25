@@ -1,7 +1,13 @@
 from pathlib import Path
 from typing import Tuple
 
-from qgis.core import QgsProject, QgsVectorFileWriter, QgsVectorLayer
+from qgis.core import (
+    Qgis,
+    QgsMessageLog,
+    QgsProject,
+    QgsVectorFileWriter,
+    QgsVectorLayer,
+)
 
 from prettier_maps.core.layers import is_quick_osm_layer
 
@@ -55,13 +61,24 @@ def save_quick_osm_layers(output_directory: str) -> None:
     instance = QgsProject.instance()
     assert instance is not None
 
-    quick_osm_geoms = ("point", "line", "polygon")
+    quick_osm_geoms = {
+        Qgis.GeometryType.Point: "point",
+        Qgis.GeometryType.Line: "line",
+        Qgis.GeometryType.Polygon: "polygon",
+    }
 
     for layer in instance.mapLayers().values():
         if is_to_be_saved(layer):
-            print(f"found layer {layer.name}")
             geom_type = layer.geometryType()
-            geom_type_str = quick_osm_geoms[geom_type]
+            geom_type_str = quick_osm_geoms.get(geom_type)
+            if geom_type_str is None:
+                QgsMessageLog.logMessage(
+                    f"Skipping layer {layer.name()!r}: "
+                    f"unsupported geometry type {geom_type!r}",
+                    "PrettierMaps",
+                    Qgis.MessageLevel.Warning,
+                )
+                continue
 
             new_layer_name = f"{layer.name()}_{geom_type_str}"
             layer.setName(new_layer_name)
@@ -70,14 +87,29 @@ def save_quick_osm_layers(output_directory: str) -> None:
             layer.saveNamedStyle(str(qml_file))
 
             # Save the temporary layer to a GeoPackage
-            QgsVectorFileWriter.writeAsVectorFormat(
+            options = QgsVectorFileWriter.SaveVectorOptions()
+            options.driverName = "GPKG"
+            options.fileEncoding = "UTF-8"
+            options.layerOptions = [
+                "GEOMETRY_NAME=geom",
+                f"layerName={new_layer_name}",
+            ]
+            result = QgsVectorFileWriter.writeAsVectorFormatV3(
                 layer,
                 output_file_str,
-                "UTF-8",
-                layer.crs(),
-                "GPKG",
-                layerOptions=["GEOMETRY_NAME=geom", f"layerName={new_layer_name}"],
+                instance.transformContext(),
+                options,
             )
+            error_code = result[0]
+            if error_code != QgsVectorFileWriter.WriterError.NoError:
+                error_message = result[1] if len(result) > 1 else ""
+                QgsMessageLog.logMessage(
+                    f"Failed to save layer {new_layer_name!r} to "
+                    f"{output_file_str}: {error_message}",
+                    "PrettierMaps",
+                    Qgis.MessageLevel.Critical,
+                )
+                continue
 
             add_permanent_layer(instance, qml_file, output_file_str, new_layer_name)
             instance.removeMapLayer(layer.id())

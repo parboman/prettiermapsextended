@@ -2,13 +2,13 @@ import webbrowser
 from pathlib import Path
 from typing import Dict, List, Set, Tuple, Union
 
-from PyQt5.QtCore import (
+from qgis.PyQt.QtCore import (
     QSize,
     Qt,
     QTimer,
 )
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import (
+from qgis.PyQt.QtGui import QFont
+from qgis.PyQt.QtWidgets import (
     QColorDialog,
     QDialog,
     QFileDialog,
@@ -173,7 +173,7 @@ class MainDialog(QDialog):
         filter_layers(self.get_selected_layers())
 
     # might or might not need
-    def no_maptiler_layers_found(self, title, message, level=Qgis.Info):
+    def no_maptiler_layers_found(self, title, message, level=Qgis.MessageLevel.Info):
         """
         Raises a relevant error to the user.
         """
@@ -191,7 +191,7 @@ class MainDialog(QDialog):
             self.no_maptiler_layers_found(
                 "Error",
                 "No MapTiler Layers Found",
-                level=Qgis.Critical,
+                level=Qgis.MessageLevel.Critical,
             )
 
             return None
@@ -209,7 +209,7 @@ class MainDialog(QDialog):
             self.no_maptiler_layers_found(
                 "Error",
                 "No MapTiler Layers Found",
-                level=Qgis.Critical,
+                level=Qgis.MessageLevel.Critical,
             )
             return None
 
@@ -225,7 +225,7 @@ class MainDialog(QDialog):
             self.no_maptiler_layers_found(
                 "Error",
                 "No MapTiler Layers Found",
-                level=Qgis.Critical,
+                level=Qgis.MessageLevel.Critical,
             )
             return None
 
@@ -360,13 +360,13 @@ class MainDialog(QDialog):
             dialog = QFileDialog()
             dialog.setFileMode(QFileDialog.FileMode.Directory)
             dialog.setOption(QFileDialog.Option.ShowDirsOnly, True)
-            if dialog.exec_():
+            if dialog.exec():
                 folder_path = dialog.selectedFiles()[0]
                 save_quick_osm_layers(folder_path)
                 self.message_bar.pushMessage(
                     "Success",
                     "All OSM layers have been saved successfully.",
-                    level=Qgis.Success,
+                    level=Qgis.MessageLevel.Success,
                     duration=5,
                 )
         else:
@@ -384,7 +384,7 @@ class MainDialog(QDialog):
             self.message_bar.pushMessage(
                 "Warning",
                 "There are no OSM layers in the current project.",
-                level=Qgis.Warning,
+                level=Qgis.MessageLevel.Warning,
                 duration=5,
             )
             return False
