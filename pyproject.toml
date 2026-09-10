@@ -1,6 +1,6 @@
 [project]
 name = "prettier_maps_extended"
-version = "1.5.1"
+version = "1.5.2"
 description = "Style Maps Easily in QGIS — extended fork with QGIS 4 / Qt 6 support"
 requires-python = ">=3.9"
 dependencies = ["setuptools"]
@@ -127,7 +127,7 @@ message_template = "Bump to {new_version}"
 tag_template = "{new_version}"
 
 [tool.tbump.version]
-current = "1.5.1"
+current = "1.5.2"
 regex = '''
   (?P<major>\d+)
   \.

@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.5.2 — 2026-09-10
+
+Hardening release, from a Bandit scan of the 1.5.1 package (10 findings, all
+B101 `assert_used`, all Low severity — no vulnerability, but two of the
+asserts were load-bearing).
+
+### Fixed
+
+- **A vector tile layer with no renderer crashed the dialog.** `filter_layers`
+  and `populate_layers` asserted that every discovered layer carried a
+  `QgsVectorTileBasicRenderer`; a layer whose renderer is missing — a corrupt
+  project, or a script that cleared it — raised `AssertionError` and the plugin
+  window never opened. Such a layer is now logged to the PrettierMaps channel
+  and skipped, and the remaining layers are still listed and filtered.
+
+### Changed
+
+- **No `assert` statements left in the shipped package.** They were type
+  narrowing for mypy, but `python -O` strips them, which turned the guards
+  above into an `AttributeError` instead of an `AssertionError`. Every one is
+  now an explicit guard: a bad layer is skipped, and the paths that cannot
+  reach a project instance return an empty result. Bandit reports no issues.
+
 ## 1.5.1 — 2026-09-10
 
 Bug-fix release. Every defect below was reproduced headlessly against real

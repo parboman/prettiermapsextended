@@ -2,7 +2,7 @@
 name=Prettier Maps (Extended)
 description=Split a MapTiler layer. QGIS 4 / Qt 6 compatible fork.
 about=Prettier Maps is a plugin that helps with separating a given vector tile layer from MapTiler into their respective vector tile sublayers for easier manageability. To start, open a map from MapTiler. Then open PrettierMaps and click split layers. This extended fork updates the original University of Glasgow project for QGIS 4 / Qt 6 compatibility.
-version=1.5.1
+version=1.5.2
 qgisMinimumVersion=3.30
 qgisMaximumVersion=4.99
 
@@ -17,7 +17,10 @@ icon=assets/logo.png
 category=Vector
 plugin_dependencies=MapTiler
 
-changelog=1.5.1 - Bug fixes: dialog no longer crashes on nested layer groups;
+changelog=1.5.2 - Hardening: a vector tile layer with no renderer no longer
+    crashes the dialog (it is logged and skipped); no assert statements left in
+    the shipped package, so nothing depends on statements python -O removes.
+    1.5.1 - Bug fixes: dialog no longer crashes on nested layer groups;
     vector tile layers outside the first group (or at the project root) are
     found; opening the plugin no longer switches off styles it cannot show;
     QuickOSM layers inside groups are styled; only QuickOSM layers are saved,

@@ -1,4 +1,4 @@
-<h1 align="center">Prettier Maps (Extended) 1.5.1</h1>
+<h1 align="center">Prettier Maps (Extended) 1.5.2</h1>
 
 <p align="center">
   <img src="prettier_maps_extended/assets/logo.png" alt="Prettier Maps logo" width="350">
@@ -82,6 +82,15 @@ before being fixed (see [CHANGELOG.md](CHANGELOG.md) for the full list):
 - `Style QuickOSM Layer` skipped QuickOSM layers that lived inside a group
 - `Save Quick OSM Layers` exported *every* in-memory layer, scratch layers
   included, and replaced them in the project with GeoPackage copies
+
+### 1.5.2 — hardening
+
+A Bandit scan of the 1.5.1 package returned ten `assert_used` findings. None
+were vulnerabilities, but two of the asserts were the only guard against a
+vector tile layer with no renderer — which crashed the dialog on open, and
+would have become an `AttributeError` under `python -O`, since that strips
+asserts entirely. The package now carries no asserts at all: a layer with a
+missing or unsupported renderer is logged and skipped, the rest still work.
 
 ---
 
