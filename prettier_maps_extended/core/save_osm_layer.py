@@ -76,7 +76,8 @@ def save_quick_osm_layers(output_directory: str) -> SaveResult:
     """
 
     instance = QgsProject.instance()
-    assert instance is not None
+    if instance is None:
+        return SaveResult(saved=0, skipped=0, failed=0)
 
     quick_osm_geoms = {
         Qgis.GeometryType.Point: "point",

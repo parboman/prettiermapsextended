@@ -18,7 +18,9 @@ from qgis.core import (
     QgsVectorTileBasicRendererStyle,
     QgsVectorTileLayer,
 )
+from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QColor
+from qgis.testing import start_app
 
 from prettier_maps_extended.core.layers import (
     filter_layers,
@@ -31,6 +33,83 @@ from prettier_maps_extended.core.style_osm_layer import (
     apply_style_to_quick_osm_layers,
     style_single_layer,
 )
+from prettier_maps_extended.ui.dialog import MainDialog
+
+
+@pytest.fixture
+def rendererless_and_healthy_layers():
+    start_app()
+    project = QgsProject.instance()
+    group = project.layerTreeRoot().addGroup("Renderer regression")
+    broken = QgsVectorTileLayer()
+    broken.setName("Rendererless tiles")
+    broken.setRenderer(None)
+    healthy = QgsVectorTileLayer()
+    healthy.setName("Healthy tiles")
+    renderer = QgsVectorTileBasicRenderer()
+    water = QgsVectorTileBasicRendererStyle()
+    water.setLayerName("water")
+    water.setStyleName("water fill")
+    water.setEnabled(False)
+    building = QgsVectorTileBasicRendererStyle()
+    building.setLayerName("building")
+    building.setStyleName("building fill")
+    building.setEnabled(True)
+    renderer.setStyles([water, building])
+    healthy.setRenderer(renderer)
+    group.addLayer(broken)
+    group.addLayer(healthy)
+    try:
+        yield project, broken, healthy
+    finally:
+        project.layerTreeRoot().removeChildNode(group)
+
+
+def test_filter_layers_skips_rendererless_and_filters_healthy(
+    rendererless_and_healthy_layers,
+) -> None:
+    project, broken, healthy = rendererless_and_healthy_layers
+
+    filter_layers({"water fill"}, project)
+
+    assert broken.renderer() is None
+    assert [style.isEnabled() for style in healthy.renderer().styles()] == [True, False]
+
+
+def test_dialog_opens_with_rendererless_layer(rendererless_and_healthy_layers) -> None:
+    _, broken, _ = rendererless_and_healthy_layers
+
+    dialog = MainDialog()
+    try:
+        assert broken.name() not in dialog.layer_checkboxes
+        all_layers = dialog.tree_widget.topLevelItem(0)
+        assert all_layers.childCount() == 1
+        assert all_layers.child(0).text(0) == "Healthy tiles"
+    finally:
+        dialog.close()
+
+
+def test_dialog_keeps_healthy_checkboxes_alongside_rendererless_layer(
+    rendererless_and_healthy_layers,
+) -> None:
+    _, _, healthy = rendererless_and_healthy_layers
+
+    dialog = MainDialog()
+    try:
+        parent = dialog.layer_checkboxes[healthy.name()]
+        assert parent.childCount() == 2
+        water = dialog.layer_checkboxes["water fill"]
+        building = dialog.layer_checkboxes["building fill"]
+        assert water.parent().parent() is parent
+        assert building.parent().parent() is parent
+        assert water.checkState(0) == Qt.CheckState.Unchecked
+        assert building.checkState(0) == Qt.CheckState.Checked
+        assert [style.isEnabled() for style in healthy.renderer().styles()] == [
+            False,
+            True,
+        ]
+    finally:
+        dialog.close()
 
 
 def test_get_layers_from_group_with_empty_group() -> None:

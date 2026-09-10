@@ -1,9 +1,11 @@
 from typing import Iterator, List, Optional
 
 from qgis.core import (
+    Qgis,
     QgsLayerTreeGroup,
     QgsLayerTreeLayer,
     QgsLayerTreeNode,
+    QgsMessageLog,
     QgsProject,
     QgsVectorLayer,
     QgsVectorTileBasicRenderer,
@@ -38,9 +40,11 @@ def get_vector_tile_layers(
     project: Optional[QgsProject] = None,
 ) -> List[QgsVectorTileLayer]:
     instance = project or QgsProject.instance()
-    assert instance is not None
+    if instance is None:
+        return []
     root = instance.layerTreeRoot()
-    assert root is not None
+    if root is None:
+        return []
     return get_layers_from_group(root)
 
 
@@ -59,9 +63,11 @@ def refresh_layer(
 def get_groups(project: Optional[QgsProject] = None) -> list[QgsLayerTreeNode]:
     """Superseded by get_vector_tile_layers; kept for compatibility."""
     instance = project or QgsProject.instance()
-    assert instance is not None
+    if instance is None:
+        return []
     root = instance.layerTreeRoot()
-    assert root is not None
+    if root is None:
+        return []
 
     return root.children()
 
@@ -79,8 +85,14 @@ def filter_layers(
 
     for layer in get_vector_tile_layers(instance_to_filter):
         renderer = layer.renderer()
-        assert renderer is not None
-        assert isinstance(renderer, QgsVectorTileBasicRenderer)
+        if not isinstance(renderer, QgsVectorTileBasicRenderer):
+            QgsMessageLog.logMessage(
+                f"Skipping layer {layer.name()!r}: "
+                "missing or unsupported tile renderer",
+                "PrettierMaps",
+                Qgis.MessageLevel.Warning,
+            )
+            continue
 
         styles = renderer.styles()
         new_styles: list[QgsVectorTileBasicRendererStyle] = []
@@ -96,7 +108,8 @@ def filter_layers(
 def has_layers() -> bool:
     """Superseded by get_vector_tile_layers; kept for compatibility."""
     instance = QgsProject.instance()
-    assert instance is not None
+    if instance is None:
+        return False
     layers = instance.mapLayers()
     return bool(layers)
 
@@ -120,7 +133,8 @@ def get_quick_osm_layers(
 ) -> List[QgsVectorLayer]:
     """Return every QuickOSM vector layer registered in the project."""
     instance = project or QgsProject.instance()
-    assert instance is not None
+    if instance is None:
+        return []
     return [
         layer
         for layer in instance.mapLayers().values()

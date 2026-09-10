@@ -4,6 +4,7 @@ from typing import Dict, List, Set, Tuple, Union
 
 from qgis.core import (
     Qgis,
+    QgsMessageLog,
     QgsVectorTileBasicRenderer,
     QgsVectorTileLayer,
 )
@@ -199,11 +200,18 @@ class MainDialog(QDialog):
         all_layers_item.setExpanded(True)
 
         for layer in vector_tile_layers:
+            renderer = layer.renderer()
+            if not isinstance(renderer, QgsVectorTileBasicRenderer):
+                QgsMessageLog.logMessage(
+                    f"Skipping layer {layer.name()!r}: "
+                    "missing or unsupported tile renderer",
+                    "PrettierMaps",
+                    Qgis.MessageLevel.Warning,
+                )
+                continue
+
             parent_item = self.make_tree_widget_item(all_layers_item, layer.name())
             self.layer_checkboxes[layer.name()] = parent_item
-
-            renderer = layer.renderer()
-            assert isinstance(renderer, QgsVectorTileBasicRenderer)
             styles = renderer.styles()
 
             sublayer_parents = {}
