@@ -1,5 +1,56 @@
 # Changelog
 
+## 1.5.1 — 2026-09-10
+
+Bug-fix release. Every defect below was reproduced headlessly against real
+QGIS 4.0.2 bindings before the fix, and the suite that pins them grew from
+7 to 23 tests.
+
+### Fixed
+
+- **The dialog crashed on nested groups.** A MapTiler group inside another
+  group raised `AttributeError: 'QgsLayerTreeGroup' object has no attribute
+  'layer'` and the window never opened.
+- **Layers outside the first top-level group were invisible.** Any unrelated
+  group above the MapTiler group produced "No MapTiler Layers Found"; a second
+  basemap group was silently ignored; a vector tile layer at the project root
+  was never listed, and `filter_layers` left its styles alone whatever the
+  checkboxes said. Discovery now walks the whole layer tree, skips unresolved
+  layer nodes and de-duplicates by layer id.
+- **Opening the plugin could blank out a basemap.** Styles whose source layer
+  is not in the `POSSIBLE_LAYERS` whitelist get no checkbox, yet were switched
+  off as soon as the dialog opened, with no way to restore them. Styles the
+  dialog cannot control are now left exactly as the user set them.
+- **`Style QuickOSM Layer` did nothing for grouped layers.** Only root-level
+  nodes were walked. QuickOSM layers are now found through the project's layer
+  registry, so layers inside groups are styled too.
+- **Styling crashed on unresolved layers and on non-single-symbol renderers.**
+  A broken project reference raised `AttributeError: 'NoneType' object has no
+  attribute 'customProperty'`; a categorized, graduated or rule-based renderer
+  raised on `symbol()`. Both are now logged to the PrettierMaps channel and
+  skipped.
+- **`Save Quick OSM Layers` saved every in-memory layer**, including unrelated
+  scratch layers, replacing each one in the project with a GeoPackage-backed
+  copy. Only QuickOSM layers are exported now; everything else is left alone.
+- **Every save logged a GDAL warning** — `does not support layer creation
+  option layerName`. The GeoPackage layer name is passed through
+  `SaveVectorOptions.layerName` instead.
+- **"No layers saved" was reported when there was simply nothing to export**
+  (the project's QuickOSM layers were already file-backed), pointing at an
+  empty message log.
+
+### Added
+
+- `make test-macos` — runs the test suite against the QGIS app's bundled
+  Python on macOS, where `qgis.core` actually exists. `make test` still needs
+  a QGIS-provisioned environment; `make test-in-docker` is unchanged.
+
+### Known limitation
+
+- With two MapTiler basemaps loaded at once, sublayer checkboxes are matched by
+  style name across both, so toggling one can affect the other. Before 1.5.1
+  the second basemap was not listed at all, so this case was unreachable.
+
 ## 1.5.0 — 2026-05-25
 
 First release of **Prettier Maps (Extended)**, a public fork of [PrettierMaps/PrettierMaps](https://github.com/PrettierMaps/PrettierMaps) v1.4.4.

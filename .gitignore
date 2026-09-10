@@ -51,6 +51,9 @@ coverage.xml
 .pytest_cache/
 cover/
 
+# QGIS test artifact
+/symbology-style.db
+
 # Translations
 *.mo
 *.pot

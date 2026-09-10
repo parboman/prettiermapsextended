@@ -1,33 +1,40 @@
 from qgis.core import (
+    Qgis,
     QgsFillSymbol,
-    QgsLayerTreeLayer,
     QgsLineSymbol,
     QgsMarkerSymbol,
+    QgsMessageLog,
     QgsVectorLayer,
 )
 from qgis.PyQt.QtGui import QColor
 from qgis.utils import iface
 
-from prettier_maps_extended.core.layers import get_groups, is_quick_osm_layer
+from prettier_maps_extended.core.layers import get_quick_osm_layers
 
 
 def apply_style_to_quick_osm_layers(colour: QColor) -> None:
     """
     Main styling function, linked to styling button. Styles all QuickOSM layers.
     """
-    for child in get_groups():
-        if not isinstance(child, QgsLayerTreeLayer):
-            continue
-        layer = child.layer()
-
-        if is_quick_osm_layer(layer):
-            style_single_layer(layer, colour)
-            update_styled_layer(layer)
+    for layer in get_quick_osm_layers():
+        style_single_layer(layer, colour)
+        update_styled_layer(layer)
 
 
 def style_single_layer(layer: QgsVectorLayer, colour: QColor) -> None:
     """Apply a uniform fill/line/marker style to a single QuickOSM layer."""
     symbol_renderer = layer.renderer()
+    if not all(
+        callable(getattr(symbol_renderer, method, None))
+        for method in ("symbol", "setSymbol")
+    ):
+        QgsMessageLog.logMessage(
+            f"Skipping layer {layer.name()!r}: "
+            "missing renderer or unsupported renderer without a single symbol",
+            "PrettierMaps",
+            Qgis.MessageLevel.Warning,
+        )
+        return
     cur_symbol = symbol_renderer.symbol()
 
     basic_symbols = (QgsFillSymbol, QgsLineSymbol, QgsMarkerSymbol)
@@ -51,4 +58,7 @@ def update_styled_layer(layer: QgsVectorLayer) -> None:
     """
 
     layer.triggerRepaint()
-    iface.layerTreeView().refreshLayerSymbology(layer.id())
+    if iface is not None:
+        tree_view = iface.layerTreeView()
+        if tree_view is not None:
+            tree_view.refreshLayerSymbology(layer.id())

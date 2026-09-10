@@ -28,6 +28,10 @@ mypy:
 test:
 	uv run pytest
 
+.PHONY: test-macos
+test-macos:
+	./scripts/run-tests-macos.sh
+
 .PHONY: cov
 cov:
 	pytest -s -v --cov=prettier_maps_extended --cov=tests --cov-report=term-missing:skip-covered
@@ -43,7 +47,10 @@ zip_plugin:
 	# Keep the in-package LICENSE in sync with the canonical repo-root one,
 	# since plugins.qgis.org requires LICENSE inside the plugin directory.
 	cp LICENSE prettier_maps_extended/LICENSE
-	zip -r prettier_maps_extended.zip prettier_maps_extended
+	# Never ship bytecode or macOS cruft to the registry — running the test
+	# suite leaves __pycache__ inside the package directory.
+	zip -r prettier_maps_extended.zip prettier_maps_extended \
+		-x '*/__pycache__/*' '*.pyc' '*.DS_Store'
 
 .PHONY: docs
 docs:

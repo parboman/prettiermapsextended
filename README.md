@@ -1,4 +1,4 @@
-<h1 align="center">Prettier Maps (Extended) 1.5.0</h1>
+<h1 align="center">Prettier Maps (Extended) 1.5.1</h1>
 
 <p align="center">
   <img src="prettier_maps_extended/assets/logo.png" alt="Prettier Maps logo" width="350">
@@ -70,6 +70,19 @@ The 1.4.4 → 1.5.0 diff is a QGIS 4 / Qt 6 compatibility pass:
 
 The plugin's actual behavior and UI are unchanged.
 
+### 1.5.1 — bug fixes
+
+Found by reviewing the plugin against real QGIS 4.0.2 bindings, all reproduced
+before being fixed (see [CHANGELOG.md](CHANGELOG.md) for the full list):
+
+- the dialog crashed on a MapTiler group nested inside another group
+- vector tile layers outside the first top-level group — including one at the
+  project root — were invisible to both the dialog and the layer filter
+- opening the plugin switched off any style it had no checkbox for
+- `Style QuickOSM Layer` skipped QuickOSM layers that lived inside a group
+- `Save Quick OSM Layers` exported *every* in-memory layer, scratch layers
+  included, and replaced them in the project with GeoPackage copies
+
 ---
 
 ## Using PrettierMaps
@@ -111,6 +124,11 @@ Or in Docker:
 
 ```bash
 make test-in-docker
+```
+
+Or on macOS with QGIS installed (set `QGIS_APP` to override discovery):
+```bash
+make test-macos
 ```
 
 ---

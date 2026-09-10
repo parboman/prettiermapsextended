@@ -4,8 +4,6 @@ from typing import Dict, List, Set, Tuple, Union
 
 from qgis.core import (
     Qgis,
-    QgsLayerTreeGroup,
-    QgsProject,
     QgsVectorTileBasicRenderer,
     QgsVectorTileLayer,
 )
@@ -28,7 +26,11 @@ from qgis.PyQt.QtWidgets import (
 
 from prettier_maps_extended.config import INFO_STYLE_PATH
 from prettier_maps_extended.config.layers import POSSIBLE_LAYERS
-from prettier_maps_extended.core import filter_layers, has_quick_osm_layers
+from prettier_maps_extended.core import (
+    filter_layers,
+    get_vector_tile_layers,
+    has_quick_osm_layers,
+)
 from prettier_maps_extended.core.save_osm_layer import save_quick_osm_layers
 from prettier_maps_extended.core.style_osm_layer import (
     apply_style_to_quick_osm_layers,
@@ -155,42 +157,7 @@ class MainDialog(QDialog):
         Find and return the vector tile layers,
         showing the relevant error when there are none.
         """
-        project = QgsProject.instance()
-        root = project.layerTreeRoot()
-
-        if not root or not root.children():
-            self.no_maptiler_layers_found(
-                "Error",
-                "No MapTiler Layers Found",
-                level=Qgis.MessageLevel.Critical,
-            )
-
-            return None
-
-        maptiler_group = next(
-            (
-                child
-                for child in root.children()
-                if isinstance(child, QgsLayerTreeGroup)
-            ),
-            None,
-        )
-
-        if not maptiler_group:
-            self.no_maptiler_layers_found(
-                "Error",
-                "No MapTiler Layers Found",
-                level=Qgis.MessageLevel.Critical,
-            )
-            return None
-
-        layer_tree_layers = [layer for layer in maptiler_group.children()]
-
-        vector_tile_layers = [
-            layer.layer()
-            for layer in layer_tree_layers
-            if isinstance(layer.layer(), QgsVectorTileLayer)
-        ]
+        vector_tile_layers = get_vector_tile_layers()
 
         if not vector_tile_layers:
             self.no_maptiler_layers_found(
@@ -351,6 +318,14 @@ class MainDialog(QDialog):
                 f"(panel: PrettierMaps) for details.",
                 level=Qgis.MessageLevel.Warning,
                 duration=10,
+            )
+        elif result.total == 0:
+            self.message_bar.pushMessage(
+                "Nothing to export",
+                "Only temporary in-memory QuickOSM layers are saved. "
+                "The project's QuickOSM layers are already on disk.",
+                level=Qgis.MessageLevel.Info,
+                duration=5,
             )
         else:
             self.message_bar.pushMessage(

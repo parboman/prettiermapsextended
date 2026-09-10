@@ -2,12 +2,15 @@ import tempfile
 from pathlib import Path
 from typing import List
 
+import pytest
 from qgis.core import (
     Qgis,
+    QgsCategorizedSymbolRenderer,
     QgsLayerTreeGroup,
     QgsLayerTreeLayer,
     QgsMapLayer,
     QgsProject,
+    QgsRendererCategory,
     QgsSingleSymbolRenderer,
     QgsSymbol,
     QgsVectorLayer,
@@ -20,9 +23,14 @@ from qgis.PyQt.QtGui import QColor
 from prettier_maps_extended.core.layers import (
     filter_layers,
     get_layers_from_group,
+    get_vector_tile_layers,
+    is_quick_osm_layer,
 )
 from prettier_maps_extended.core.save_osm_layer import save_quick_osm_layers
-from prettier_maps_extended.core.style_osm_layer import style_single_layer
+from prettier_maps_extended.core.style_osm_layer import (
+    apply_style_to_quick_osm_layers,
+    style_single_layer,
+)
 
 
 def test_get_layers_from_group_with_empty_group() -> None:
@@ -91,8 +99,10 @@ def test_filter_layers() -> None:
     renderer = QgsVectorTileBasicRenderer()
     style1 = QgsVectorTileBasicRendererStyle()
     style1.setStyleName("water")
+    style1.setLayerName("water")
     style2 = QgsVectorTileBasicRendererStyle()
     style2.setStyleName("building")
+    style2.setLayerName("building")
     renderer.setStyles([style1, style2])
     layer.setRenderer(renderer)
 
@@ -102,6 +112,130 @@ def test_filter_layers() -> None:
     assert isinstance(renderer, QgsVectorTileBasicRenderer)
     styles = renderer.styles()
 
+    assert styles[0].isEnabled() is True
+    assert styles[1].isEnabled() is False
+
+
+def test_get_vector_tile_layers_at_project_root() -> None:
+    project = QgsProject()
+    layer = QgsVectorTileLayer()
+    project.layerTreeRoot().addLayer(layer)
+
+    assert get_vector_tile_layers(project) == [layer]
+
+
+def test_get_vector_tile_layers_in_nested_subgroup() -> None:
+    project = QgsProject()
+    group = project.layerTreeRoot().addGroup("Basemaps")
+    nested = group.addGroup("MapTiler").addGroup("Tiles")
+    layer = QgsVectorTileLayer()
+    nested.addLayer(layer)
+
+    assert get_vector_tile_layers(project) == [layer]
+    assert get_layers_from_group(group) == [layer]
+
+
+def test_get_vector_tile_layers_in_sibling_groups() -> None:
+    project = QgsProject()
+    root = project.layerTreeRoot()
+    root.addGroup("Unrelated")
+    first = root.addGroup("A")
+    second = root.addGroup("B")
+    layer_a = QgsVectorTileLayer()
+    layer_b = QgsVectorTileLayer()
+    first.addLayer(layer_a)
+    second.addLayer(layer_b)
+    second.addLayer(layer_a)
+
+    assert get_vector_tile_layers(project) == [layer_a, layer_b]
+    assert get_layers_from_group(root) == [layer_a, layer_b]
+
+
+def test_get_vector_tile_layers_skips_unresolved_node() -> None:
+    project = QgsProject()
+    group = project.layerTreeRoot().addGroup("Basemaps")
+    missing = QgsLayerTreeLayer("missing-id", "missing", "/nonexistent.gpkg", "ogr")
+    assert missing.layer() is None
+    group.addChildNode(missing)
+    layer = QgsVectorTileLayer()
+    group.addLayer(layer)
+
+    assert get_vector_tile_layers(project) == [layer]
+    assert get_layers_from_group(group) == [layer]
+
+
+def test_filter_layers_at_project_root() -> None:
+    project = QgsProject()
+    layer = QgsVectorTileLayer()
+    project.layerTreeRoot().addLayer(layer)
+    renderer = QgsVectorTileBasicRenderer()
+    water = QgsVectorTileBasicRendererStyle()
+    water.setStyleName("water")
+    water.setLayerName("water")
+    water.setEnabled(False)
+    building = QgsVectorTileBasicRendererStyle()
+    building.setStyleName("building")
+    building.setLayerName("building")
+    building.setEnabled(True)
+    renderer.setStyles([water, building])
+    layer.setRenderer(renderer)
+
+    filter_layers({"water"}, project)
+
+    styles = layer.renderer().styles()
+    assert [(style.styleName(), style.isEnabled()) for style in styles] == [
+        ("water", True),
+        ("building", False),
+    ]
+
+
+@pytest.fixture
+def mixed_source_styles():
+    project = QgsProject()
+    layer = QgsVectorTileLayer()
+    project.layerTreeRoot().addLayer(layer)
+    renderer = QgsVectorTileBasicRenderer()
+    uncontrolled = QgsVectorTileBasicRendererStyle()
+    uncontrolled.setLayerName("custom_source")
+    uncontrolled.setStyleName("water")
+    uncontrolled.setEnabled(True)
+    controlled = QgsVectorTileBasicRendererStyle()
+    controlled.setLayerName("water")
+    controlled.setStyleName("water fill")
+    controlled.setEnabled(True)
+    renderer.setStyles([uncontrolled, controlled])
+    layer.setRenderer(renderer)
+    return project, layer
+
+
+def test_filter_layers_preserves_enabled_unlisted_source(mixed_source_styles) -> None:
+    project, layer = mixed_source_styles
+
+    filter_layers(set(), project)
+
+    assert layer.renderer().styles()[0].isEnabled() is True
+
+
+def test_filter_layers_preserves_disabled_unlisted_source(mixed_source_styles) -> None:
+    project, layer = mixed_source_styles
+    renderer = layer.renderer()
+    styles = renderer.styles()
+    styles[0].setEnabled(False)
+    renderer.setStyles(styles)
+
+    filter_layers({"water"}, project)
+
+    assert layer.renderer().styles()[0].isEnabled() is False
+
+
+def test_filter_layers_disables_unselected_whitelisted_source(
+    mixed_source_styles,
+) -> None:
+    project, layer = mixed_source_styles
+
+    filter_layers(set(), project)
+
+    styles = layer.renderer().styles()
     assert styles[0].isEnabled() is True
     assert styles[1].isEnabled() is False
 
@@ -143,12 +277,83 @@ def test_single_layer_styling() -> None:
     assert all(color == test_color for color in colors)
 
 
+@pytest.mark.parametrize("depth", [1, 3])
+def test_grouped_quick_osm_layer_is_styled(depth) -> None:
+    project = QgsProject.instance()
+    group = project.layerTreeRoot().addGroup("QuickOSM results")
+    layer = QgsVectorLayer("Point?crs=EPSG:4326", "quickosm", "memory")
+    layer.setCustomProperty("variableNames", ["quickosm_query"])
+    layer.renderer().symbol().setColor(QColor(255, 0, 0))
+    project.addMapLayer(layer, False)
+    nested = group
+    for _ in range(depth - 1):
+        nested = nested.addGroup("Nested results")
+    nested.addLayer(layer)
+    try:
+        apply_style_to_quick_osm_layers(QColor(0, 255, 0))
+        assert layer.renderer().symbol().color() == QColor(0, 255, 0)
+    finally:
+        project.removeMapLayer(layer.id())
+        project.layerTreeRoot().removeChildNode(group)
+
+
+def test_quick_osm_styling_skips_unresolved_node() -> None:
+    root = QgsProject.instance().layerTreeRoot()
+    missing = QgsLayerTreeLayer("missing-id-123", "missing", "/nonexistent.gpkg", "ogr")
+    assert missing.layer() is None
+    root.addChildNode(missing)
+    try:
+        apply_style_to_quick_osm_layers(QColor(0, 255, 0))
+    finally:
+        root.removeChildNode(missing)
+
+
+def test_categorized_quick_osm_layer_is_unchanged() -> None:
+    layer = QgsVectorLayer("Point?crs=EPSG:4326", "categorized", "memory")
+    layer.setCustomProperty("variableNames", ["quickosm_query"])
+    symbol = QgsSymbol.defaultSymbol(Qgis.GeometryType.Point)
+    symbol.setColor(QColor(255, 0, 0))
+    layer.setRenderer(
+        QgsCategorizedSymbolRenderer(
+            "kind", [QgsRendererCategory("a", symbol, "Category A")]
+        )
+    )
+    renderer = layer.renderer()
+
+    style_single_layer(layer, QColor(0, 255, 0))
+
+    assert layer.renderer() is renderer
+    assert renderer.classAttribute() == "kind"
+    category = renderer.categories()[0]
+    assert category.value() == "a"
+    assert category.label() == "Category A"
+    assert category.symbol().color() == QColor(255, 0, 0)
+
+
+def test_is_quick_osm_layer_with_none() -> None:
+    assert is_quick_osm_layer(None) is False
+
+
+def test_non_quick_osm_layer_is_not_styled() -> None:
+    project = QgsProject.instance()
+    layer = QgsVectorLayer("Point?crs=EPSG:4326", "ordinary", "memory")
+    layer.renderer().symbol().setColor(QColor(255, 0, 0))
+    project.addMapLayer(layer)
+    try:
+        apply_style_to_quick_osm_layers(QColor(0, 255, 0))
+        assert layer.renderer().symbol().color() == QColor(255, 0, 0)
+    finally:
+        project.removeMapLayer(layer.id())
+
+
 def test_save_quick_osm_layers():
     project = QgsProject.instance()
 
     layer1 = QgsVectorLayer("Point?crs=EPSG:4326", "test_layer1", "memory")
+    layer1.setCustomProperty("variableNames", ["quickosm_query"])
     project.addMapLayer(layer1)
     layer2 = QgsVectorLayer("LineString?crs=EPSG:4326", "test_layer2", "memory")
+    layer2.setCustomProperty("variableNames", ["quickosm_query"])
     project.addMapLayer(layer2)
 
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -178,3 +383,56 @@ def test_save_quick_osm_layers():
         # Remove the new layers from the project to release the file handles
         QgsProject.instance().removeMapLayer(new_layer1[0].id())
         QgsProject.instance().removeMapLayer(new_layer2[0].id())
+
+
+def test_save_quick_osm_layers_leaves_scratch_layer_untouched(tmp_path):
+    project = QgsProject.instance()
+    scratch = QgsVectorLayer("Point?crs=EPSG:4326", "my_scratch_notes", "memory")
+    scratch_id = scratch.id()
+    project.addMapLayer(scratch)
+    try:
+        result = save_quick_osm_layers(str(tmp_path))
+
+        assert result.saved == 0
+        assert result.skipped == 0
+        assert result.failed == 0
+        assert list(tmp_path.iterdir()) == []
+        assert project.mapLayers() == {scratch_id: scratch}
+        assert scratch.name() == "my_scratch_notes"
+        assert scratch.isValid()
+        assert scratch.providerType() == "memory"
+    finally:
+        project.removeAllMapLayers()
+
+
+def test_save_quick_osm_layers_in_mixed_project(tmp_path):
+    project = QgsProject.instance()
+    scratch = QgsVectorLayer("Point?crs=EPSG:4326", "my_scratch_notes", "memory")
+    scratch_id = scratch.id()
+    quick_osm = QgsVectorLayer("Point?crs=EPSG:4326", "quickosm", "memory")
+    quick_osm.setCustomProperty("variableNames", ["quickosm_query"])
+    quick_osm_id = quick_osm.id()
+    project.addMapLayer(scratch)
+    project.addMapLayer(quick_osm)
+    try:
+        result = save_quick_osm_layers(str(tmp_path))
+
+        assert result.saved == 1
+        assert result.skipped == 0
+        assert result.failed == 0
+        assert {path.name for path in tmp_path.iterdir()} == {
+            "quickosm_point.gpkg",
+            "quickosm_point.qml",
+        }
+        assert project.mapLayer(scratch_id) is scratch
+        assert scratch.name() == "my_scratch_notes"
+        assert scratch.isValid()
+        assert scratch.providerType() == "memory"
+        assert project.mapLayer(quick_osm_id) is None
+        saved_layers = project.mapLayersByName("quickosm_point")
+        assert len(saved_layers) == 1
+        assert saved_layers[0].isValid()
+        assert saved_layers[0].providerType() == "ogr"
+        assert len(project.mapLayers()) == 2
+    finally:
+        project.removeAllMapLayers()

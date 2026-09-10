@@ -38,6 +38,7 @@ The `LICENSE` file must live inside `prettier_maps_extended/` (not just at repo 
 
 - `make zip_plugin` — build the installable QGIS plugin zip
 - `make test` — run pytest suite
+- `make test-macos` — run tests using the macOS QGIS app's bundled Python
 - `make test-in-docker` — run tests in a containerized QGIS env
 
 ## Layout

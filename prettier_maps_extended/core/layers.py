@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Iterator, List, Optional
 
 from qgis.core import (
     QgsLayerTreeGroup,
@@ -11,15 +11,37 @@ from qgis.core import (
     QgsVectorTileLayer,
 )
 
+from prettier_maps_extended.config.layers import POSSIBLE_LAYERS
 
-def get_layers_from_group(group: QgsLayerTreeGroup) -> List[QgsVectorTileLayer]:
-    layers = []
-    for child in group.children():
+
+def _iter_vector_tile_layers(node: QgsLayerTreeNode) -> Iterator[QgsVectorTileLayer]:
+    for child in node.children():
         if isinstance(child, QgsLayerTreeLayer):
             layer = child.layer()
             if isinstance(layer, QgsVectorTileLayer):
-                layers.append(layer)
+                yield layer
+        else:
+            yield from _iter_vector_tile_layers(child)
+
+
+def get_layers_from_group(group: QgsLayerTreeGroup) -> List[QgsVectorTileLayer]:
+    layers = []
+    seen = set()
+    for layer in _iter_vector_tile_layers(group):
+        if layer.id() not in seen:
+            seen.add(layer.id())
+            layers.append(layer)
     return layers
+
+
+def get_vector_tile_layers(
+    project: Optional[QgsProject] = None,
+) -> List[QgsVectorTileLayer]:
+    instance = project or QgsProject.instance()
+    assert instance is not None
+    root = instance.layerTreeRoot()
+    assert root is not None
+    return get_layers_from_group(root)
 
 
 def refresh_layer(
@@ -35,6 +57,7 @@ def refresh_layer(
 
 
 def get_groups(project: Optional[QgsProject] = None) -> list[QgsLayerTreeNode]:
+    """Superseded by get_vector_tile_layers; kept for compatibility."""
     instance = project or QgsProject.instance()
     assert instance is not None
     root = instance.layerTreeRoot()
@@ -54,31 +77,24 @@ def filter_layers(
         If none is provided, the current QGIS project is used instead.
     """
 
-    for child in get_groups(project=instance_to_filter):
-        if not isinstance(child, QgsLayerTreeGroup):
-            continue
+    for layer in get_vector_tile_layers(instance_to_filter):
+        renderer = layer.renderer()
+        assert renderer is not None
+        assert isinstance(renderer, QgsVectorTileBasicRenderer)
 
-        for layer in get_layers_from_group(child):
-            if not isinstance(layer, QgsVectorTileLayer):
-                continue
-            renderer = layer.renderer()
-            assert renderer is not None
-            assert isinstance(renderer, QgsVectorTileBasicRenderer)
+        styles = renderer.styles()
+        new_styles: list[QgsVectorTileBasicRendererStyle] = []
+        for style in styles:
+            if style.layerName() in POSSIBLE_LAYERS:
+                style.setEnabled(style.styleName() in layers_to_turn_on)
+            new_styles.append(style)
 
-            styles = renderer.styles()
-            new_styles: list[QgsVectorTileBasicRendererStyle] = []
-            for style in styles:
-                if style.styleName() in layers_to_turn_on:
-                    style.setEnabled(True)
-                else:
-                    style.setEnabled(False)
-                new_styles.append(style)
-
-            renderer.setStyles(new_styles)
-            refresh_layer(layer, renderer)
+        renderer.setStyles(new_styles)
+        refresh_layer(layer, renderer)
 
 
 def has_layers() -> bool:
+    """Superseded by get_vector_tile_layers; kept for compatibility."""
     instance = QgsProject.instance()
     assert instance is not None
     layers = instance.mapLayers()
@@ -89,6 +105,8 @@ def is_quick_osm_layer(layer: QgsVectorLayer) -> bool:
     """
     Simple filter for identifying which layers are the results of QuickOSM queries.
     """
+    if layer is None:
+        return False
     variable_names = layer.customProperty("variableNames")
     if variable_names is None:
         return False
@@ -97,11 +115,21 @@ def is_quick_osm_layer(layer: QgsVectorLayer) -> bool:
     return True
 
 
+def get_quick_osm_layers(
+    project: Optional[QgsProject] = None,
+) -> List[QgsVectorLayer]:
+    """Return every QuickOSM vector layer registered in the project."""
+    instance = project or QgsProject.instance()
+    assert instance is not None
+    return [
+        layer
+        for layer in instance.mapLayers().values()
+        if isinstance(layer, QgsVectorLayer) and is_quick_osm_layer(layer)
+    ]
+
+
 def has_quick_osm_layers() -> bool:
     """
     Simple check that there is at least one QuickOSM layer.
     """
-    for layer in QgsProject.instance().mapLayers().values():
-        if isinstance(layer, QgsVectorLayer) and is_quick_osm_layer(layer):
-            return True
-    return False
+    return bool(get_quick_osm_layers())

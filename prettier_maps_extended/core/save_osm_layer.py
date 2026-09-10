@@ -9,6 +9,8 @@ from qgis.core import (
     QgsVectorLayer,
 )
 
+from .layers import is_quick_osm_layer
+
 
 class SaveResult(NamedTuple):
     saved: int
@@ -25,10 +27,12 @@ class SaveResult(NamedTuple):
 
 
 def is_to_be_saved(layer: QgsVectorLayer) -> bool:
-    """Return True if the layer is an in-memory vector layer eligible for export."""
+    """Return True for valid in-memory QuickOSM vector layers eligible for export."""
     if not isinstance(layer, QgsVectorLayer):
         return False
     if not layer.isValid():
+        return False
+    if not is_quick_osm_layer(layer):
         return False
     return layer.dataProvider().name() == "memory"
 
@@ -111,10 +115,8 @@ def save_quick_osm_layers(output_directory: str) -> SaveResult:
         options = QgsVectorFileWriter.SaveVectorOptions()
         options.driverName = "GPKG"
         options.fileEncoding = "UTF-8"
-        options.layerOptions = [
-            "GEOMETRY_NAME=geom",
-            f"layerName={new_layer_name}",
-        ]
+        options.layerName = new_layer_name
+        options.layerOptions = ["GEOMETRY_NAME=geom"]
         result = QgsVectorFileWriter.writeAsVectorFormatV3(
             layer,
             output_file_str,
