@@ -1,6 +1,6 @@
 import webbrowser
 from pathlib import Path
-from typing import Dict, List, Set, Tuple, Union
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 from qgis.core import (
     Qgis,
@@ -41,7 +41,12 @@ from prettier_maps_extended.core.style_osm_layer import (
 class MainDialog(QDialog):
     def __init__(self) -> None:
         super().__init__()
-        self.layer_checkboxes: Dict[str, QTreeWidgetItem] = {}
+        # Style checkboxes, keyed by (vector tile layer id, style name): two
+        # basemaps can carry identically-named styles and must not share one.
+        self.layer_checkboxes: Dict[Tuple[str, str], QTreeWidgetItem] = {}
+        # One parent item per listed vector tile layer, keyed by layer id.
+        self.layer_items: Dict[str, QTreeWidgetItem] = {}
+        self.all_layers_item: Optional[QTreeWidgetItem] = None
         self.init_ui()
         filter_layers(self.get_selected_layers())
 
@@ -130,12 +135,19 @@ class MainDialog(QDialog):
         close_button.clicked.connect(self.close_dialog)
         layout.addWidget(close_button)
 
-    def get_selected_layers(self) -> Set[str]:
-        selected_layers = {
-            k
-            for k, v in self.layer_checkboxes.items()
-            if v.checkState(0) == Qt.CheckState.Checked
+    def get_selected_layers(self) -> Dict[str, Set[str]]:
+        """
+        Return layer id -> checked style names, for every layer the dialog lists.
+
+        A listed layer with nothing checked maps to an empty set, so its
+        whitelisted styles are switched off; unlisted layers are absent.
+        """
+        selected_layers: Dict[str, Set[str]] = {
+            layer_id: set() for layer_id in self.layer_items
         }
+        for (layer_id, style_name), item in self.layer_checkboxes.items():
+            if item.checkState(0) == Qt.CheckState.Checked:
+                selected_layers.setdefault(layer_id, set()).add(style_name)
         return selected_layers
 
     def on_item_changed(self, item: QTreeWidgetItem) -> None:
@@ -196,7 +208,7 @@ class MainDialog(QDialog):
             return
 
         all_layers_item = self.make_tree_widget_item(self.tree_widget, "All layers")
-        self.layer_checkboxes["All Layers"] = all_layers_item
+        self.all_layers_item = all_layers_item
         all_layers_item.setExpanded(True)
 
         for layer in vector_tile_layers:
@@ -211,7 +223,7 @@ class MainDialog(QDialog):
                 continue
 
             parent_item = self.make_tree_widget_item(all_layers_item, layer.name())
-            self.layer_checkboxes[layer.name()] = parent_item
+            self.layer_items[layer.id()] = parent_item
             styles = renderer.styles()
 
             sublayer_parents = {}
@@ -242,7 +254,7 @@ class MainDialog(QDialog):
                     if style.isEnabled()
                     else Qt.CheckState.Unchecked,
                 )
-                self.layer_checkboxes[label_name] = grandchild_item
+                self.layer_checkboxes[(layer.id(), label_name)] = grandchild_item
 
         if all_layers_item is not None:
             self.update_parent_check_state(all_layers_item)

@@ -1,5 +1,26 @@
 # Changelog
 
+## Unreleased
+
+Not yet released. Whoever cuts the next version: turn this into its version
+heading and add a matching `changelog=` block to `metadata.txt`.
+
+### Fixed
+
+- **Two basemaps no longer share sublayer checkboxes.** With two MapTiler
+  basemaps loaded, the dialog matched sublayer checkboxes by style name across
+  both, so unchecking a sublayer in one basemap switched off the same-named
+  style in the other, and the first basemap's checkbox kept showing the old
+  state. Checkboxes and filtering are now scoped to each vector tile layer.
+  This supersedes the 1.5.1 known limitation below.
+
+### Known limitation
+
+- Inside a single basemap, two styles that share a style name under different
+  source layers (for example a `fill` under `water` and a `fill` under
+  `landcover`) still share one entry: only the later checkbox switches both
+  styles, and toggling the earlier one has no effect. This predates 1.5.1.
+
 ## 1.5.2 — 2026-09-10
 
 Hardening release, from a Bandit scan of the 1.5.1 package (10 findings, all
@@ -73,6 +94,7 @@ QGIS 4.0.2 bindings before the fix, and the suite that pins them grew from
 - With two MapTiler basemaps loaded at once, sublayer checkboxes are matched by
   style name across both, so toggling one can affect the other. Before 1.5.1
   the second basemap was not listed at all, so this case was unreachable.
+  *(Superseded: fixed on `par/per-layer-sublayers`, see Unreleased.)*
 
 ## 1.5.0 — 2026-05-25
 
