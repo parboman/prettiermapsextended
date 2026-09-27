@@ -38,6 +38,11 @@ ln -sfn "$STDLIB" "$CACHE/home/lib/$(basename "$PY")"
 
 export PYTHONHOME="$CACHE/home"
 export PYTHONPATH="$CACHE/site:$REPO_ROOT"
+# QGIS's launcher normally points PROJ at its bundled data; without it pyproj
+# warns on import and CRS lookups can fail. Respect a caller's own setting.
+if [ -z "${PROJ_DATA:-}" ] && [ -f "$QGIS_APP/Contents/Resources/qgis/proj/proj.db" ]; then
+    export PROJ_DATA="$QGIS_APP/Contents/Resources/qgis/proj"
+fi
 if ! "$PY" -c 'import pytest' >/dev/null 2>&1; then
     printf 'Installing pytest into %s/site (network required on first run).\n' "$CACHE"
     "$PY" -m pip install --quiet --target "$CACHE/site" pytest
