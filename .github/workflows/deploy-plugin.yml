@@ -1,9 +1,17 @@
 name: Release Plugin
 
+# Manual only. Inherited from upstream, where every tag push auto-published to
+# plugins.qgis.org. This fork uploads by hand through the registry's web form
+# (checks in CLAUDE.md, "Before uploading to plugins.qgis.org") and has no
+# OSGEO_USERNAME / OSGEO_PASSWORD secrets, so on a tag push this job would
+# create a GitHub release and then fail at the upload step. To use it: add
+# those two secrets, then run it from the Actions tab with an existing tag.
 on:
-    push:
-        tags:
-            - "*"
+    workflow_dispatch:
+        inputs:
+            tag:
+                description: "Existing git tag to release, e.g. 1.5.3"
+                required: true
 
 jobs:
     release:
@@ -11,9 +19,11 @@ jobs:
 
         steps:
             - name: Set env
-              run: echo "TAG=${GITHUB_REF##*/}" >> $GITHUB_ENV
+              run: echo "TAG=${{ inputs.tag }}" >> $GITHUB_ENV
 
             - uses: actions/checkout@v2
+              with:
+                  ref: ${{ inputs.tag }}
 
             - name: Install uv
               uses: astral-sh/setup-uv@v4
@@ -24,6 +34,7 @@ jobs:
             - name: Create release on GitHub
               uses: ncipollo/release-action@v1.10.0
               with:
+                  tag: ${{ inputs.tag }}
                   token: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Package and deploy the zip
