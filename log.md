@@ -10,3 +10,4 @@
 - **2026-09-10** 1.5.2 built and scanned clean by Pär (his scanner + local Bandit/flake8/ruff all zero); registry upload + review outcome not confirmed in-session #registry
 - **2026-09-10** the test suite runs natively on this Mac for the first time (`make test-macos`, QGIS 4.0.2 bundled interpreter): 7 → 26 tests. First run pip-installs pytest into `~/.cache/prettiermaps-qgis-test/site` #testing
 - **2026-09-27** 1.5.2 confirmed approved and live on plugins.qgis.org (stable, uploaded 2026-09-10, 142 downloads) — closes the 2026-09-10 open question #registry
+- **2026-09-27** GitHub repo homepage field changed from upstream's `prettiermaps.github.io/PrettierMaps/` to `https://plugins.qgis.org/plugins/prettier_maps_extended/` (the open forpar question; Pär said "fix anything useful") #repo
