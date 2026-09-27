@@ -1,7 +1,7 @@
 # todo — prettiermapsextended
 
 - [x] [burn] **Per-layer sublayer selection.** *Done 2026-09-13 in `bc88721` (branch
-  `par/per-layer-sublayers`, unmerged): checkboxes keyed by `(layer id, style name)`,
+  `par/per-layer-sublayers`, merged to main as `e1754be`): checkboxes keyed by `(layer id, style name)`,
   `filter_layers` takes layer id → style names, two-basemap dialog regression test added;
   `make test-macos` 26 → 29 passing.* `MainDialog.layer_checkboxes` is
   keyed by style name only, and `filter_layers` matches styles by name across
