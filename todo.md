@@ -17,7 +17,9 @@
   cross-item sweep on 2026-09-10; documented as a known limitation in the
   1.5.1 changelog, and unreachable before 1.5.1 because the second basemap was
   never listed.
-- [ ] [burn] [claimed 2026-09-27 14:22 deadline-ae] **Same-named styles under different source layers collide.** Inside one
+- [x] [burn] **Same-named styles under different source layers collide.** *Done 2026-09-27 in
+  `423dd17` (`Source: par/same-named-styles`); `make test-macos` 29 → 30; residual exact-duplicate
+  case is a Known limitation in Unreleased.* Inside one
   `QgsVectorTileLayer`, two styles with the same `styleName()` under different source
   layers (e.g. `fill` under `water` and `fill` under `landcover`) share the
   `layer_checkboxes` key `(layer id, style name)` in `ui/dialog.py` `populate_layers`: the
