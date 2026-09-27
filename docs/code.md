@@ -31,7 +31,7 @@ This file is the main entrypoint for QGIS.
 
 ### `ui/`
 
-This directory contains the Qt UI files for the QGIS plugin (Qt 5 and Qt 6 compatible via the `qgis.PyQt` shim).
+This directory contains the plugin dialog, built in Python in `dialog.py` (no `.ui` files; Qt 5 and Qt 6 compatible via the `qgis.PyQt` shim).
 
 ### `core/`
 

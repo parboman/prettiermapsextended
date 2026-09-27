@@ -31,10 +31,10 @@ The only dependency is MapTiler. However to make full use of the plugin, it is r
 
 #### Locally
 
-1. Install the plugin dependencies to your QGIS Python environment:
+1. Install the development dependencies (same as `make venv`):
 
 ```bash
-pip install -e .[dev,test,docs]
+uv sync --all-groups
 ```
 
 2. Create the QGIS zip file:
