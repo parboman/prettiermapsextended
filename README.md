@@ -39,16 +39,17 @@ The PrettierMaps name nods to [**marceloprates/prettymaps**](https://github.com/
 ### This fork
 
 - **Pär Boman** ([@parboman](https://github.com/parboman)) — human in the loop
-- **Claude Opus 4.7** (Anthropic) — wrote the code
-- **OpenAI Codex (GPT-5.5)** — code review partner, via the [/cowork pattern](https://github.com/anthropics/claude-code)
+- **Claude** (Anthropic; Opus 4.7 for 1.5.0, Opus 5 and 5.5 since) — wrote most of the code, and specced and reviewed the rest
+- **OpenAI Codex (GPT-5.5)** — code review partner via the [/cowork pattern](https://github.com/anthropics/claude-code); built the 1.5.1 fixes from Claude's specs
 
 #### How this fork is actually produced
 
 I should be upfront about how this works, because pretending otherwise would be dishonest:
 
 - **I, Pär, do not code.** I cannot write Python or PyQt. I read the diffs, I push back when something feels off, and I misunderstand at least one thing per session. I'm the product manager, not the engineer.
-- **Claude Opus 4.7 writes 100% of the code in this repo.** Every line in this fork's diff against upstream was written by Claude.
-- **Codex reviews every step** before commit. The first round of this migration caught a P1 blocker — `QAction` moved from `QtWidgets` to `QtGui` in Qt 6 — that Claude had missed. The review loop is real, not theater.
+- **AI writes 100% of the code in this repo** — no line in this fork's diff against upstream was typed by a human. Two setups, and the one each change used is recorded in its commit message:
+  - **Claude writes, Codex reviews** every step before commit. This is how 1.5.0, 1.5.2 and most later work were made. The first review round of the migration caught a P1 blocker — `QAction` moved from `QtWidgets` to `QtGui` in Qt 6 — that Claude had missed. The review loop is real, not theater.
+  - **Claude specs and reviews, Codex writes.** The 1.5.1 defect fixes were built this way.
 - **You are reading documentation written by Claude.** Including this section. If that's a problem for you, the [original upstream](https://github.com/PrettierMaps/PrettierMaps) is human-authored and works on QGIS 3.
 
 If something is broken, blame me — I shipped it. If something is correct, credit the original authors for the design and Claude+Codex for keeping it building. That's the honest split.

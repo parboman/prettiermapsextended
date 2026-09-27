@@ -9,7 +9,7 @@
 
 ---
 
-This is a public, AI-maintained fork of the original University of Glasgow PrettierMaps project. See the [repository README](https://github.com/parboman/prettiermapsextended#credits) for full credits and an honest account of how this fork is produced (Claude Opus writes the code, Codex reviews it, Pär is the human in the loop).
+This is a public, AI-maintained fork of the original University of Glasgow PrettierMaps project. See the [repository README](https://github.com/parboman/prettiermapsextended#credits) for full credits and an honest account of how this fork is produced (Claude and Codex write the code and review each other's work, Pär is the human in the loop).
 
 **Repository**: <a href="https://github.com/parboman/prettiermapsextended" target="_blank">github.com/parboman/prettiermapsextended</a>
 
