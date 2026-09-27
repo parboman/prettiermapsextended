@@ -34,7 +34,7 @@ test-macos:
 
 .PHONY: cov
 cov:
-	pytest -s -v --cov=prettier_maps_extended --cov=tests --cov-report=term-missing:skip-covered
+	uv run --with pytest-cov pytest -s -v --cov=prettier_maps_extended --cov=tests --cov-report=term-missing:skip-covered
 
 .PHONY: test-in-docker
 test-in-docker:

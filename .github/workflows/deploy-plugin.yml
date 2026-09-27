@@ -21,7 +21,7 @@ jobs:
             - name: Set env
               run: echo "TAG=${{ inputs.tag }}" >> $GITHUB_ENV
 
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v4
               with:
                   ref: ${{ inputs.tag }}
 
