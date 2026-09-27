@@ -1,4 +1,4 @@
-from typing import Dict, Iterator, List, Optional, Set
+from typing import Dict, Iterator, List, Optional, Set, Tuple
 
 from qgis.core import (
     Qgis,
@@ -73,18 +73,20 @@ def get_groups(project: Optional[QgsProject] = None) -> list[QgsLayerTreeNode]:
 
 
 def filter_layers(
-    layers_to_turn_on: Dict[str, Set[str]],
+    layers_to_turn_on: Dict[str, Set[Tuple[str, str]]],
     instance_to_filter: Optional[QgsProject] = None,
 ) -> None:
     """
-    Given the enabled style names per vector tile layer, shows only those styles
-    while hiding the others.
+    Given the enabled (source layer, style name) pairs per vector tile layer,
+    shows only those styles while hiding the others.
 
     Selection is scoped to each layer: two basemaps that share a style name are
-    filtered independently. A layer whose id is absent from the mapping is left
+    filtered independently, and so are two styles sharing a name under different
+    source layers of one basemap. A layer whose id is absent from the mapping is left
     untouched, so a layer the dialog never listed is never switched off.
 
-    :param layers_to_turn_on: Layer id -> names of the styles to show on it.
+    :param layers_to_turn_on: Layer id -> (source layer, style name) pairs to
+        show on it.
     :param instance_to_filter: Instance of a QGISProject to filter on.
         If none is provided, the current QGIS project is used instead.
     """
@@ -108,7 +110,9 @@ def filter_layers(
         new_styles: list[QgsVectorTileBasicRendererStyle] = []
         for style in styles:
             if style.layerName() in POSSIBLE_LAYERS:
-                style.setEnabled(style.styleName() in enabled_styles)
+                style.setEnabled(
+                    (style.layerName(), style.styleName()) in enabled_styles
+                )
             new_styles.append(style)
 
         renderer.setStyles(new_styles)

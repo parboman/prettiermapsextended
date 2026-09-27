@@ -70,7 +70,13 @@ def test_filter_layers_skips_rendererless_and_filters_healthy(
 ) -> None:
     project, broken, healthy = rendererless_and_healthy_layers
 
-    filter_layers({broken.id(): {"water fill"}, healthy.id(): {"water fill"}}, project)
+    filter_layers(
+        {
+            broken.id(): {("water", "water fill")},
+            healthy.id(): {("water", "water fill")},
+        },
+        project,
+    )
 
     assert broken.renderer() is None
     assert [style.isEnabled() for style in healthy.renderer().styles()] == [True, False]
@@ -99,8 +105,8 @@ def test_dialog_keeps_healthy_checkboxes_alongside_rendererless_layer(
     try:
         parent = dialog.layer_items[healthy.id()]
         assert parent.childCount() == 2
-        water = dialog.layer_checkboxes[(healthy.id(), "water fill")]
-        building = dialog.layer_checkboxes[(healthy.id(), "building fill")]
+        water = dialog.layer_checkboxes[(healthy.id(), "water", "water fill")]
+        building = dialog.layer_checkboxes[(healthy.id(), "building", "building fill")]
         assert water.parent().parent() is parent
         assert building.parent().parent() is parent
         assert water.checkState(0) == Qt.CheckState.Unchecked
@@ -186,7 +192,7 @@ def test_filter_layers() -> None:
     renderer.setStyles([style1, style2])
     layer.setRenderer(renderer)
 
-    filter_layers({layer.id(): {"water"}}, instance)
+    filter_layers({layer.id(): {("water", "water")}}, instance)
 
     renderer = layer.renderer()
     assert isinstance(renderer, QgsVectorTileBasicRenderer)
@@ -260,7 +266,7 @@ def test_filter_layers_at_project_root() -> None:
     renderer.setStyles([water, building])
     layer.setRenderer(renderer)
 
-    filter_layers({layer.id(): {"water"}}, project)
+    filter_layers({layer.id(): {("water", "water")}}, project)
 
     styles = layer.renderer().styles()
     assert [(style.styleName(), style.isEnabled()) for style in styles] == [
@@ -303,7 +309,7 @@ def test_filter_layers_preserves_disabled_unlisted_source(mixed_source_styles) -
     styles[0].setEnabled(False)
     renderer.setStyles(styles)
 
-    filter_layers({layer.id(): {"water"}}, project)
+    filter_layers({layer.id(): {("custom_source", "water")}}, project)
 
     assert layer.renderer().styles()[0].isEnabled() is False
 
@@ -350,7 +356,10 @@ def test_filter_layers_scopes_selection_to_each_layer() -> None:
     project.layerTreeRoot().addLayer(second)
 
     filter_layers(
-        {first.id(): {"building fill"}, second.id(): {"water fill", "building fill"}},
+        {
+            first.id(): {("building", "building fill")},
+            second.id(): {("water", "water fill"), ("building", "building fill")},
+        },
         project,
     )
 
@@ -395,13 +404,13 @@ def test_dialog_two_basemaps_toggle_independently(two_basemaps) -> None:
     dialog = MainDialog()
     try:
         assert set(dialog.layer_checkboxes) == {
-            (first.id(), "water fill"),
-            (first.id(), "building fill"),
-            (second.id(), "water fill"),
-            (second.id(), "building fill"),
+            (first.id(), "water", "water fill"),
+            (first.id(), "building", "building fill"),
+            (second.id(), "water", "water fill"),
+            (second.id(), "building", "building fill"),
         }
-        first_water = dialog.layer_checkboxes[(first.id(), "water fill")]
-        second_water = dialog.layer_checkboxes[(second.id(), "water fill")]
+        first_water = dialog.layer_checkboxes[(first.id(), "water", "water fill")]
+        second_water = dialog.layer_checkboxes[(second.id(), "water", "water fill")]
         assert first_water.parent().parent() is dialog.layer_items[first.id()]
         assert second_water.parent().parent() is dialog.layer_items[second.id()]
 
@@ -412,14 +421,68 @@ def test_dialog_two_basemaps_toggle_independently(two_basemaps) -> None:
         assert first_water.checkState(0) == Qt.CheckState.Unchecked
         assert second_water.checkState(0) == Qt.CheckState.Checked
         assert dialog.get_selected_layers() == {
-            first.id(): {"building fill"},
-            second.id(): {"water fill", "building fill"},
+            first.id(): {("building", "building fill")},
+            second.id(): {("water", "water fill"), ("building", "building fill")},
         }
 
         first_water.setCheckState(0, Qt.CheckState.Checked)
 
         assert _enabled(first) == [True, True]
         assert _enabled(second) == [True, True]
+    finally:
+        dialog.close()
+
+
+@pytest.fixture
+def same_named_styles():
+    """One basemap whose two source layers each carry a style called `fill`."""
+    start_app()
+    project = QgsProject.instance()
+    group = project.layerTreeRoot().addGroup("Same-named styles")
+    layer = QgsVectorTileLayer()
+    layer.setName("Basemap")
+    renderer = QgsVectorTileBasicRenderer()
+    water = QgsVectorTileBasicRendererStyle()
+    water.setLayerName("water")
+    water.setStyleName("fill")
+    water.setEnabled(True)
+    building = QgsVectorTileBasicRendererStyle()
+    building.setLayerName("building")
+    building.setStyleName("fill")
+    building.setEnabled(True)
+    renderer.setStyles([water, building])
+    layer.setRenderer(renderer)
+    group.addLayer(layer)
+    try:
+        yield layer
+    finally:
+        project.layerTreeRoot().removeChildNode(group)
+
+
+def test_dialog_same_named_styles_toggle_independently(same_named_styles) -> None:
+    layer = same_named_styles
+
+    dialog = MainDialog()
+    try:
+        assert set(dialog.layer_checkboxes) == {
+            (layer.id(), "water", "fill"),
+            (layer.id(), "building", "fill"),
+        }
+        water = dialog.layer_checkboxes[(layer.id(), "water", "fill")]
+        building = dialog.layer_checkboxes[(layer.id(), "building", "fill")]
+        assert water is not building
+
+        water.setCheckState(0, Qt.CheckState.Unchecked)
+
+        assert _enabled(layer) == [False, True]
+        assert water.checkState(0) == Qt.CheckState.Unchecked
+        assert building.checkState(0) == Qt.CheckState.Checked
+        assert dialog.get_selected_layers() == {layer.id(): {("building", "fill")}}
+
+        water.setCheckState(0, Qt.CheckState.Checked)
+        building.setCheckState(0, Qt.CheckState.Unchecked)
+
+        assert _enabled(layer) == [True, False]
     finally:
         dialog.close()
 

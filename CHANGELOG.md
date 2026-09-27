@@ -13,13 +13,17 @@ heading and add a matching `changelog=` block to `metadata.txt`.
   style in the other, and the first basemap's checkbox kept showing the old
   state. Checkboxes and filtering are now scoped to each vector tile layer.
   This supersedes the 1.5.1 known limitation below.
+- **Same-named styles under different source layers no longer collide.**
+  Inside one basemap, a `fill` under `water` and a `fill` under `landcover`
+  shared one checkbox entry: only the later checkbox switched both styles, and
+  toggling the earlier one had no effect. Checkboxes and filtering now match
+  on the (source layer, style name) pair. This predated 1.5.1.
 
 ### Known limitation
 
-- Inside a single basemap, two styles that share a style name under different
-  source layers (for example a `fill` under `water` and a `fill` under
-  `landcover`) still share one entry: only the later checkbox switches both
-  styles, and toggling the earlier one has no effect. This predates 1.5.1.
+- Two renderer styles with the same source layer *and* the same style name
+  would still share one checkbox entry. No real MapTiler style has shown this;
+  keying by style index would fix it if one ever does.
 
 ## 1.5.2 — 2026-09-10
 
